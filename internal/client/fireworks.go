@@ -45,15 +45,18 @@ func NewClient(cfg *config.Config) *Client {
 // Complete makes a chat completion request to the Fireworks API.
 // It enforces temperature=0.0 and retries up to 3 times on 429 or 5xx errors.
 // Automatically strips <think>...</think> reasoning tags from the output.
+// maxTokens > 0 enforces a server-side completion token ceiling.
 func (c *Client) Complete(
 	ctx context.Context,
 	model string,
 	systemPrompt string,
 	userPrompt string,
+	maxTokens int,
 ) (string, models.TokenUsage, error) {
 	reqBody := models.ChatRequest{
 		Model:       model,
 		Temperature: 0.0,
+		MaxTokens:   maxTokens,
 		Messages: []models.ChatMessage{
 			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: userPrompt},

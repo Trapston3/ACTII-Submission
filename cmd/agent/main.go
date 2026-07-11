@@ -158,11 +158,14 @@ func processTask(
 	// E. Router model selection
 	model := taskRouter.SelectModel(category)
 
-	// F. Fireworks API invocation
-	log.Printf("[Task %s] Routing to Fireworks (%s, category: %s)", taskID, model, category)
+	// F. Dynamic max_tokens cap based on category
+	maxTokens := client.MaxTokensForCategory(category)
+
+	// G. Fireworks API invocation
+	log.Printf("[Task %s] Routing to Fireworks (%s, category: %s, maxTokens: %d)", taskID, model, category, maxTokens)
 	systemPrompt := client.SystemPrompt(category)
 
-	ans, _, err := apiClient.Complete(ctx, model, systemPrompt, optimizedPrompt)
+	ans, _, err := apiClient.Complete(ctx, model, systemPrompt, optimizedPrompt, maxTokens)
 	if err != nil {
 		log.Printf("[Task %s] Fireworks API completion failed: %v. Returning fallback.", taskID, err)
 		return models.Result{
@@ -171,7 +174,7 @@ func processTask(
 		}
 	}
 
-	// G. Write to Cache
+	// H. Write to Cache
 	taskCache.Set(prompt, ans)
 	return models.Result{TaskID: taskID, Answer: ans}
 }

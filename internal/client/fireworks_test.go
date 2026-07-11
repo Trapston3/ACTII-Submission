@@ -58,7 +58,7 @@ func TestClient_Complete_Success(t *testing.T) {
 	}
 
 	c := NewClient(cfg)
-	ans, usage, err := c.Complete(context.Background(), "test-model", "System Prompt", "User Prompt")
+	ans, usage, err := c.Complete(context.Background(), "test-model", "System Prompt", "User Prompt", 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestClient_Complete_RetryOnRateLimit(t *testing.T) {
 	// Override delay function for testing to avoid wasting time
 	c.retryDelay = func(attempt int) {}
 
-	ans, _, err := c.Complete(context.Background(), "test-model", "sys", "usr")
+	ans, _, err := c.Complete(context.Background(), "test-model", "sys", "usr", 0)
 	if err != nil {
 		t.Fatalf("unexpected error after retries: %v", err)
 	}
