@@ -155,8 +155,16 @@ func processTask(
 	// D. Prompt compression & optimization
 	optimizedPrompt := optimizer.Optimize(prompt)
 
-	// E. Router model selection
-	model := taskRouter.SelectModel(category)
+	// E. Router model selection (with Tier 3 escalation for rejected sentiment)
+	var model string
+	if category == models.CategorySentiment {
+		// Sentiment that failed local solver or 1-token gate requires nuanced
+		// understanding of contrastive structure → force Tier 3 model
+		model = taskRouter.MostCapableModel()
+		log.Printf("[Task %s] Sentiment escalated to Tier 3 model: %s", taskID, model)
+	} else {
+		model = taskRouter.SelectModel(category)
+	}
 
 	// F. Dynamic max_tokens cap based on category
 	maxTokens := client.MaxTokensForCategory(category)

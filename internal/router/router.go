@@ -95,3 +95,25 @@ func (r *Router) CheapestModel() string {
 
 	return cheapest
 }
+
+// MostCapableModel returns the model with the highest cost tier.
+// Used for sentiment escalation when contrastive prompts require
+// nuanced reasoning that cheaper models hallucinate on.
+func (r *Router) MostCapableModel() string {
+	if len(r.config.Models) == 0 {
+		return ""
+	}
+
+	best := r.config.Models[0]
+	maxTier := 0
+
+	for _, m := range r.config.Models {
+		tier := r.config.ModelTiers[m]
+		if tier > maxTier {
+			maxTier = tier
+			best = m
+		}
+	}
+
+	return best
+}

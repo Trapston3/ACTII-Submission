@@ -268,6 +268,11 @@ func (p *parser) parsePrimary() (float64, error) {
 
 // ─── SENTIMENT SOLVER ─────────────────────────────────────────────────────────
 
+// contrastiveRe detects conjunctions that signal mixed or nuanced sentiment.
+// When present, the local solver must NOT attempt classification — these
+// require cloud models that understand contextual polarity shifts.
+var contrastiveRe = regexp.MustCompile(`(?i)\b(but|however|although|though|yet|nevertheless|on the other hand|despite|in spite of|conversely|whereas|while|still)\b`)
+
 // positiveWords are strong unambiguous positive sentiment signals.
 var positiveWords = []string{
 	"love", "amazing", "excellent", "fantastic", "wonderful",
@@ -286,6 +291,12 @@ var negativeWords = []string{
 
 func solveSentiment(prompt string) models.SolverResult {
 	lower := strings.ToLower(prompt)
+
+	// CONTRASTIVE GATE: if the prompt contains a contrastive conjunction,
+	// the sentiment is likely mixed/nuanced and must be routed to cloud.
+	if contrastiveRe.MatchString(lower) {
+		return models.SolverResult{Solved: false}
+	}
 
 	posCount := countSignals(lower, positiveWords)
 	negCount := countSignals(lower, negativeWords)
