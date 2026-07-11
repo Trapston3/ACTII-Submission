@@ -21,6 +21,9 @@ type rule struct {
 // to prevent over-matching by broader patterns.
 var rules []rule
 
+// strictMathExprRe matches raw numerical expressions directly.
+var strictMathExprRe = regexp.MustCompile(`^[\d\s\.\+\-\*\/\^\(\)]+$|^[\d\s\.\+\-\*\/\^\(\)]*\bsqrt\b[\d\s\.\+\-\*\/\^\(\)]*$`)
+
 func init() {
 	// Each pattern is case-insensitive ((?i) prefix).
 	// Word boundaries (\b) prevent partial-word false matches.
@@ -33,6 +36,7 @@ func init() {
 			`(?i)\b(bug|debug|debugg|error\s+in|fix\s+(the\s+)?(bug|code|error|issue)|what('s|s| is)\s+wrong|not\s+working|why\s+is\s+(this|the)\s+code|syntax\s+error|traceback|exception|stack\s+trace|failing\s+test)\b`,
 			models.CategoryCodeDebug,
 		},
+
 		// ── Code Generation ──────────────────────────────────────────────────
 		{
 			`(?i)\b(write\s+(?:(an?|the)\s+)?(?:([\w\-\+#]+)\s+)?(function|class|method|program|script|code)|implement(ation)?|create\s+(?:(an?|the)\s+)?(?:([\w\-\+#]+)\s+)?(class|function|method)|generate\s+(?:(an?|the)\s+)?(?:([\w\-\+#]+)\s+)?(code|function|query|script)|code\s+that|algorithm\s+(for|that|to)|write\s+code)\b`,
@@ -92,6 +96,11 @@ func Classify(prompt string) string {
 	trimmed := strings.TrimSpace(prompt)
 	if trimmed == "" {
 		return models.CategoryGeneral
+	}
+
+	// Dynamic detection: if it is a pure mathematical expression, force Math category.
+	if strictMathExprRe.MatchString(strings.ToLower(trimmed)) {
+		return models.CategoryMath
 	}
 
 	for _, r := range rules {
