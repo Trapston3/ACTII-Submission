@@ -182,7 +182,10 @@ func processTask(
 		}
 	}
 
-	// H. Write to Cache
+	// H. Enforce output formatting/boundary audits
+	ans = client.AuditOutput(category, ans)
+
+	// I. Write to Cache
 	taskCache.Set(prompt, ans)
 	return models.Result{TaskID: taskID, Answer: ans}
 }
