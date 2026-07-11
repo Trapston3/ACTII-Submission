@@ -172,3 +172,47 @@ func TestClient_ValidateAnswer(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_SanitizeOutput(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			"markdown code block",
+			"```python\ndef foo():\n    return 42\n```",
+			"def foo():\n    return 42",
+		},
+		{
+			"preamble and markdown block",
+			"Here's the code:\n```go\nfmt.Println(\"hello\")\n```",
+			"fmt.Println(\"hello\")",
+		},
+		{
+			"preamble, code, and signoff",
+			"Here is the answer: 42. Hope this helps!",
+			"42.",
+		},
+		{
+			"let me know signoff",
+			"The capital is Paris. Let me know if you need anything else.",
+			"The capital is Paris.",
+		},
+		{
+			"no artifacts",
+			"Just a plain answer without extra fluff.",
+			"Just a plain answer without extra fluff.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeOutput(tt.input)
+			if got != tt.expected {
+				t.Errorf("sanitizeOutput(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
