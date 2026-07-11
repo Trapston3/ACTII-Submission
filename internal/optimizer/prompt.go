@@ -11,6 +11,8 @@ package optimizer
 import (
 	"regexp"
 	"strings"
+
+	"devfleet-agent/internal/models"
 )
 
 // All patterns are compiled once at package init — never per-call.
@@ -67,7 +69,8 @@ var (
 
 // Optimize compresses a prompt through all four stages and returns the result.
 // It is safe to call with an empty string.
-func Optimize(prompt string) string {
+// category is used to conditionally bypass PII scrubbing for extraction/debugging tasks.
+func Optimize(category string, prompt string) string {
 	if prompt == "" {
 		return ""
 	}
@@ -79,9 +82,12 @@ func Optimize(prompt string) string {
 	result = trailingFillerRe.ReplaceAllString(result, "")
 
 	// Stage 3: VaultGuard PII scrubbing (SSN before phone to prevent partial overlap)
-	result = emailRe.ReplaceAllString(result, "[REDACTED]")
-	result = ssnRe.ReplaceAllString(result, "[REDACTED]")
-	result = phoneRe.ReplaceAllString(result, "[REDACTED]")
+	// Conditionally bypassed for CategoryNER, CategoryFactual, and CategoryCodeDebug.
+	if category != models.CategoryNER && category != models.CategoryFactual && category != models.CategoryCodeDebug {
+		result = emailRe.ReplaceAllString(result, "[REDACTED]")
+		result = ssnRe.ReplaceAllString(result, "[REDACTED]")
+		result = phoneRe.ReplaceAllString(result, "[REDACTED]")
+	}
 
 	// Stage 4: Normalize whitespace — collapse all runs of whitespace
 	// (spaces, tabs, newlines) to a single space, then trim
