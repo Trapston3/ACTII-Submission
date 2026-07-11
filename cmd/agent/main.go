@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	inputPath           = "/input/tasks.json"
-	outputPath          = "/output/results.json"
+	defaultInputPath    = "/input/tasks.json"
+	defaultOutputPath   = "/output/results.json"
 	globalTimeout       = 9 * time.Minute // 1-minute safety buffer for 10-minute hard cap
 	maxConcurrency      = 4              // Keep concurrency conservative to avoid 429 penalties
 	tokenBreakerCap     = 30000          // Keep cumulative budget under 30,000 tokens
@@ -36,7 +36,17 @@ const (
 func main() {
 	log.Println("[DevFleet] Starting Orchestrator...")
 
-	// 1. Load and validate runtime environment configurations
+	// 1. Resolve paths (allow environment variable overrides for local tests)
+	inPath := os.Getenv("INPUT_PATH")
+	if inPath == "" {
+		inPath = defaultInputPath
+	}
+	outPath := os.Getenv("OUTPUT_PATH")
+	if outPath == "" {
+		outPath = defaultOutputPath
+	}
+
+	// 2. Load and validate runtime environment configurations
 	cfg, err := config.Load()
 	if err != nil {
 		log.Printf("[DevFleet] Configuration error: %v", err)
@@ -44,13 +54,13 @@ func main() {
 	}
 	log.Printf("[DevFleet] Configuration loaded. %d allowed models. Base URL: %s", len(cfg.Models), cfg.BaseURL)
 
-	// 2. Read evaluation batch tasks
-	tasks, err := readTasks(inputPath)
+	// 3. Read evaluation batch tasks
+	tasks, err := readTasks(inPath)
 	if err != nil {
 		log.Printf("[DevFleet] Failed to read input tasks: %v", err)
 		os.Exit(1)
 	}
-	log.Printf("[DevFleet] Loaded %d tasks for execution", len(tasks))
+	log.Printf("[DevFleet] Loaded %d tasks from %s for execution", len(tasks), inPath)
 
 	// 3. Initialize pipeline components
 	apiClient := client.NewClient(cfg)
@@ -88,8 +98,8 @@ func main() {
 	_ = g.Wait()
 
 	// 6. Write final payloads atomically
-	log.Printf("[DevFleet] Writing %d results to %s...", len(results), outputPath)
-	if err := output.WriteResults(outputPath, results); err != nil {
+	log.Printf("[DevFleet] Writing %d results to %s...", len(results), outPath)
+	if err := output.WriteResults(outPath, results); err != nil {
 		log.Printf("[DevFleet] Failed to write results: %v", err)
 		os.Exit(1)
 	}
