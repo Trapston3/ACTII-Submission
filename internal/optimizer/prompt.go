@@ -1,9 +1,8 @@
 // Package optimizer compresses prompts before API submission to minimize token spend.
-// It implements four stages:
+// It implements three stages:
 //  1. Leading filler stripping (pleasantries, indirect phrasing)
 //  2. Trailing filler stripping (sign-offs, politeness markers)
-//  3. VaultGuard PII scrubbing (email, phone, SSN → [REDACTED])
-//  4. Whitespace normalization (collapse multi-spaces/newlines, trim)
+//  3. Whitespace normalization (collapse multi-spaces/newlines, trim)
 //
 // Each saved token directly improves leaderboard rank.
 package optimizer
@@ -11,8 +10,6 @@ package optimizer
 import (
 	"regexp"
 	"strings"
-
-	"devfleet-agent/internal/models"
 )
 
 // All patterns are compiled once at package init — never per-call.
@@ -48,29 +45,13 @@ var (
 			`)[.!]?\s*$`,
 	)
 
-	// ── VaultGuard PII scrubbers ───────────────────────────────────────────────
-
-	// Email: user@domain.tld (broad match, safe for hackathon prompts)
-	emailRe = regexp.MustCompile(`[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}`)
-
-	// US SSN: 123-45-6789 (must come BEFORE phone to avoid partial-match overlap)
-	ssnRe = regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`)
-
-	// US Phone: various formats — (800) 555-0100, 555-123-4567, 555.867.5309, 18005550100
-	phoneRe = regexp.MustCompile(
-		`\b(\+?1[-.\s]?)?` +
-			`(\(?\d{3}\)?[-.\s]?)` +
-			`\d{3}[-.\s]?\d{4}\b`,
-	)
-
 	// ── Whitespace normalizer ─────────────────────────────────────────────────
-	multiSpaceRe   = regexp.MustCompile(`\s+`)
+	multiSpaceRe = regexp.MustCompile(`\s+`)
 )
 
-// Optimize compresses a prompt through all four stages and returns the result.
+// Optimize compresses a prompt through all stages and returns the result.
 // It is safe to call with an empty string.
-// category is used to conditionally bypass PII scrubbing for extraction/debugging tasks.
-func Optimize(category string, prompt string) string {
+func Optimize(prompt string) string {
 	if prompt == "" {
 		return ""
 	}
@@ -81,15 +62,7 @@ func Optimize(category string, prompt string) string {
 	// Stage 2: Strip trailing filler
 	result = trailingFillerRe.ReplaceAllString(result, "")
 
-	// Stage 3: VaultGuard PII scrubbing (SSN before phone to prevent partial overlap)
-	// Conditionally bypassed for CategoryNER, CategoryFactual, and CategoryCodeDebug.
-	if category != models.CategoryNER && category != models.CategoryFactual && category != models.CategoryCodeDebug {
-		result = emailRe.ReplaceAllString(result, "[REDACTED]")
-		result = ssnRe.ReplaceAllString(result, "[REDACTED]")
-		result = phoneRe.ReplaceAllString(result, "[REDACTED]")
-	}
-
-	// Stage 4: Normalize whitespace — collapse all runs of whitespace
+	// Stage 3: Normalize whitespace — collapse all runs of whitespace
 	// (spaces, tabs, newlines) to a single space, then trim
 	result = multiSpaceRe.ReplaceAllString(result, " ")
 	result = strings.TrimSpace(result)

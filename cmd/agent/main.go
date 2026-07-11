@@ -153,7 +153,7 @@ func processTask(
 	}
 
 	// D. Prompt compression & optimization
-	optimizedPrompt := optimizer.Optimize(category, prompt)
+	optimizedPrompt := optimizer.Optimize(prompt)
 
 	// E. Router model selection (with Tier 3 escalation for rejected sentiment)
 	var model string
