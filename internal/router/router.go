@@ -117,3 +117,25 @@ func (r *Router) MostCapableModel() string {
 
 	return best
 }
+
+// GetNextFallbackModel returns the next cheapest available model from
+// ALLOWED_MODELS that is different from the failed model. Returns empty string
+// if no other models are configured.
+func (r *Router) GetNextFallbackModel(failedModel string) string {
+	var bestFallback string
+	minTier := math.MaxInt32
+
+	for _, m := range r.config.Models {
+		if m == failedModel {
+			continue
+		}
+		tier := r.config.ModelTiers[m]
+		if tier < minTier {
+			minTier = tier
+			bestFallback = m
+		}
+	}
+
+	return bestFallback
+}
+

@@ -169,13 +169,22 @@ func processTask(
 	// F. Dynamic max_tokens cap based on category
 	maxTokens := client.MaxTokensForCategory(category)
 
-	// G. Fireworks API invocation
+	// G. Fireworks API invocation with cross-model fallback
 	log.Printf("[Task %s] Routing to Fireworks (%s, category: %s, maxTokens: %d)", taskID, model, category, maxTokens)
 	systemPrompt := client.SystemPrompt(category)
 
 	ans, _, err := apiClient.Complete(ctx, model, systemPrompt, optimizedPrompt, maxTokens)
 	if err != nil {
-		log.Printf("[Task %s] Fireworks API completion failed: %v. Returning fallback.", taskID, err)
+		log.Printf("[Task %s] Primary model %s failed: %v. Attempting cross-model fallback...", taskID, model, err)
+		fallbackModel := taskRouter.GetNextFallbackModel(model)
+		if fallbackModel != "" {
+			log.Printf("[Task %s] Escalating fallback to model: %s", taskID, fallbackModel)
+			ans, _, err = apiClient.Complete(ctx, fallbackModel, systemPrompt, optimizedPrompt, maxTokens)
+		}
+	}
+
+	if err != nil {
+		log.Printf("[Task %s] Fireworks API completion failed (all models exhausted): %v. Returning fallback.", taskID, err)
 		return models.Result{
 			TaskID: taskID,
 			Answer: "Unable to process",

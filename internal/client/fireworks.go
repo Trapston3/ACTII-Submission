@@ -56,6 +56,12 @@ func NewClient(cfg *config.Config) *Client {
 	}
 }
 
+// OverrideRetryDelay overrides the default sleep behavior during retries (useful for testing).
+func (c *Client) OverrideRetryDelay(delayFn func(attempt int)) {
+	c.retryDelay = delayFn
+}
+
+
 // Complete makes a chat completion request to the Fireworks API.
 // It enforces temperature=0.0 and retries up to 3 times on 429 or 5xx errors.
 // Automatically strips <think>...</think> reasoning tags from the output.

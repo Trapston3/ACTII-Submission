@@ -98,3 +98,39 @@ func tierForTest(m string) int {
 	}
 	return 2
 }
+
+func TestRouter_GetNextFallbackModel(t *testing.T) {
+	cfg := &config.Config{
+		Models:     []string{"llama-70b-std", "llama-8b-small", "deepseek-r1-heavy"},
+		ModelTiers: map[string]int{"llama-70b-std": 2, "llama-8b-small": 1, "deepseek-r1-heavy": 3},
+	}
+	r := NewRouter(cfg)
+
+	tests := []struct {
+		failedModel string
+		wantModel   string
+	}{
+		{"llama-8b-small", "llama-70b-std"},      // Cheapest model other than small is standard (Tier 2)
+		{"llama-70b-std", "llama-8b-small"},      // Cheapest model other than standard is small (Tier 1)
+		{"deepseek-r1-heavy", "llama-8b-small"},  // Cheapest model other than heavy is small (Tier 1)
+	}
+
+	for _, tt := range tests {
+		got := r.GetNextFallbackModel(tt.failedModel)
+		if got != tt.wantModel {
+			t.Errorf("GetNextFallbackModel(%q) = %q, want %q", tt.failedModel, got, tt.wantModel)
+		}
+	}
+
+	// Single model test
+	cfgSingle := &config.Config{
+		Models:     []string{"only-model"},
+		ModelTiers: map[string]int{"only-model": 1},
+	}
+	rSingle := NewRouter(cfgSingle)
+	gotSingle := rSingle.GetNextFallbackModel("only-model")
+	if gotSingle != "" {
+		t.Errorf("expected empty string when no other model is available, got %q", gotSingle)
+	}
+}
+

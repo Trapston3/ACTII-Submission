@@ -175,3 +175,49 @@ func TestIntegration_TokenBreakerCeilingTriggered(t *testing.T) {
 		t.Errorf("expected TokenBreaker default answer, got %s", res2.Answer)
 	}
 }
+
+func TestIntegration_CrossModelFallback(t *testing.T) {
+	// Mock server that fails for primary model but succeeds for fallback model
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req models.ChatRequest
+		json.NewDecoder(r.Body).Decode(&req)
+
+		if req.Model == "failed-model" {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		resp := models.ChatResponse{
+			Choices: []models.ChatChoice{
+				{Message: models.ChatMessage{Role: "assistant", Content: "Fallback Success"}},
+			},
+			Usage: models.TokenUsage{TotalTokens: 10},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	cfg := &config.Config{
+		APIKey:     "mock-key",
+		BaseURL:    server.URL,
+		Models:     []string{"failed-model", "fallback-model"},
+		ModelTiers: map[string]int{"failed-model": 2, "fallback-model": 1},
+	}
+
+	apiClient := client.NewClient(cfg)
+	// Suppress sleep delays in retry loop to make tests fast
+	apiClient.OverrideRetryDelay(func(attempt int) {})
+
+	taskRouter := router.NewRouter(cfg)
+	taskCache := cache.New()
+
+	task := models.Task{TaskID: "task-fail", Prompt: "What is the capital of France?"}
+
+	// Should attempt failed-model, catch error, route to fallback-model, and succeed
+	res := processTask(context.Background(), task, apiClient, taskRouter, taskCache)
+	if res.Answer != "Fallback Success" {
+		t.Errorf("expected Fallback Success, got %q", res.Answer)
+	}
+}
+
