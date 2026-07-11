@@ -12,6 +12,23 @@ var (
 	bulletLineRe  = regexp.MustCompile(`(?m)^\s*[-*•\d]+\.?\s*(.*)$`)
 )
 
+// stopWords represents a list of trailing prepositions and conjunctions that
+// should be dropped during bullet point truncation to maintain grammatical validity.
+var stopWords = map[string]bool{
+	"and":  true,
+	"the":  true,
+	"or":   true,
+	"with": true,
+	"a":    true,
+	"an":   true,
+	"to":   true,
+	"in":   true,
+	"of":   true,
+	"is":   true,
+	"are":  true,
+	"but":  true,
+}
+
 // AuditOutput post-processes the API output to enforce strict schema,
 // sentence/word constraints, and format requirements specified by the evaluation harness.
 func AuditOutput(category string, answer string) string {
@@ -142,10 +159,16 @@ func auditBulletedList(answer string) string {
 	}
 
 	// Process each bullet: limit to 15 words, hard truncate at 14 words if exceeded.
+	// Drops trailing stop words/prepositions from the 14th position to maintain grammar.
 	for i, b := range bullets {
 		words := strings.Fields(b)
 		if len(words) > 15 {
-			bullets[i] = strings.Join(words[:14], " ") + "."
+			truncatedWords := words[:14]
+			lastWord := strings.ToLower(strings.Trim(truncatedWords[13], `.,;:!?()[]`))
+			if stopWords[lastWord] {
+				truncatedWords = truncatedWords[:13]
+			}
+			bullets[i] = strings.Join(truncatedWords, " ") + "."
 		} else {
 			// Ensure it ends with a period
 			bullets[i] = strings.TrimSuffix(b, ".") + "."

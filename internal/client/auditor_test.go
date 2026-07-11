@@ -98,6 +98,11 @@ func TestAuditOutput_BulletedList(t *testing.T) {
 			"- First bullet point is extremely long and will be truncated because it has more.\n- Second short bullet.\n- Third short bullet.",
 		},
 		{
+			"bullet point trailing stop word truncation",
+			"- First bullet point is extremely long and will be truncated because it has to wait until next week.\n- Second short bullet.\n- Third short bullet.",
+			"- First bullet point is extremely long and will be truncated because it has.\n- Second short bullet.\n- Third short bullet.",
+		},
+		{
 			"too many bullets",
 			"- One\n- Two\n- Three\n- Four\n- Five",
 			"- One.\n- Two.\n- Three.",
