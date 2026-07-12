@@ -205,8 +205,6 @@ func (c *Client) doPost(ctx context.Context, reqBody models.ChatRequest) (models
 		}
 	}
 	url := baseURL
-	log.Printf("[DEBUG] Fireworks API Request URL: %s", url)
-	log.Printf("[DEBUG] Using Model: %s", reqBody.Model)
 
 	data, err := json.Marshal(reqBody)
 	if err != nil {
@@ -231,7 +229,6 @@ func (c *Client) doPost(ctx context.Context, reqBody models.ChatRequest) (models
 		// Read the error response body for diagnostic logging
 		var errBody []byte
 		errBody, _ = io.ReadAll(io.LimitReader(resp.Body, 1024))
-		log.Printf("[DEBUG] Fireworks API error response (status %d): %s", resp.StatusCode, string(errBody))
 		return models.ChatResponse{}, &apiError{
 			statusCode: resp.StatusCode,
 			message:    fmt.Sprintf("Fireworks API returned status %d %s: %s", resp.StatusCode, resp.Status, string(errBody)),
