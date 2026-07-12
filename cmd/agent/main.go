@@ -202,7 +202,7 @@ func processTask(
 	}
 
 	// H. Enforce output formatting/boundary audits
-	ans = client.AuditOutput(category, ans)
+	ans = client.AuditOutput(category, ans, prompt)
 
 	// I. Write to Cache
 	taskCache.Set(prompt, ans)

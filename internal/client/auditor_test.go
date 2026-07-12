@@ -19,7 +19,7 @@ func TestAuditOutput_Math(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AuditOutput("math", tt.input)
+			got := AuditOutput("math", tt.input, "")
 			if got != tt.expected {
 				t.Errorf("AuditOutput(math, %q) = %q, want %q", tt.input, got, tt.expected)
 			}
@@ -40,7 +40,7 @@ func TestAuditOutput_NER(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AuditOutput("ner", tt.input)
+			got := AuditOutput("ner", tt.input, "")
 			if got != tt.expected {
 				t.Errorf("AuditOutput(ner, %q) = %q, want %q", tt.input, got, tt.expected)
 			}
@@ -73,7 +73,7 @@ func TestAuditOutput_Sentiment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AuditOutput("sentiment", tt.input)
+			got := AuditOutput("sentiment", tt.input, "")
 			if got != tt.expected {
 				t.Errorf("AuditOutput(sentiment, %q) = %q, want %q", tt.input, got, tt.expected)
 			}
@@ -116,7 +116,7 @@ func TestAuditOutput_BulletedList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AuditOutput("factual", tt.input)
+			got := AuditOutput("factual", tt.input, "")
 			// Normalize newlines for Windows/Unix compatibility in comparison
 			gotNorm := strings.ReplaceAll(got, "\r\n", "\n")
 			expNorm := strings.ReplaceAll(tt.expected, "\r\n", "\n")
@@ -150,9 +150,50 @@ func TestAuditOutput_SentenceLimiting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := AuditOutput(tt.category, tt.input)
+			got := AuditOutput(tt.category, tt.input, "")
 			if got != tt.expected {
 				t.Errorf("AuditOutput(%s, %q) = %q, want %q", tt.category, tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestAuditOutput_DynamicSentenceLimiting(t *testing.T) {
+	tests := []struct {
+		name     string
+		category string
+		prompt   string
+		input    string
+		expected string
+	}{
+		{
+			"dynamic limit 2 from prompt word",
+			"summarization",
+			"Summarize in exactly two sentences: ...",
+			"First sentence. Second sentence. Third sentence.",
+			"First sentence. Second sentence.",
+		},
+		{
+			"dynamic limit 1 from prompt number",
+			"factual",
+			"Answer in 1 sentence only.",
+			"First sentence. Second sentence.",
+			"First sentence.",
+		},
+		{
+			"dynamic limit 4 from prompt word",
+			"general",
+			"Write exactly four sentences.",
+			"One. Two. Three. Four. Five. Six.",
+			"One. Two. Three. Four.",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := AuditOutput(tt.category, tt.input, tt.prompt)
+			if got != tt.expected {
+				t.Errorf("AuditOutput(%s, %q, %q) = %q, want %q", tt.category, tt.input, tt.prompt, got, tt.expected)
 			}
 		})
 	}

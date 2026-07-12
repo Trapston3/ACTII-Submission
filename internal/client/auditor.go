@@ -2,6 +2,7 @@ package client
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -31,7 +32,7 @@ var stopWords = map[string]bool{
 
 // AuditOutput post-processes the API output to enforce strict schema,
 // sentence/word constraints, and format requirements specified by the evaluation harness.
-func AuditOutput(category string, answer string) string {
+func AuditOutput(category string, answer string, prompt string) string {
 	answer = strings.TrimSpace(answer)
 	if answer == "" {
 		return "Unable to process"
@@ -58,6 +59,11 @@ func AuditOutput(category string, answer string) string {
 		return auditSentiment(answer)
 	}
 
+	// Check if prompt specifies an explicit sentence limit
+	if limit := parseSentenceLimit(prompt); limit > 0 {
+		return limitSentences(answer, limit)
+	}
+
 	// 5. Category-specific sentence count limits
 	switch category {
 	case "factual", "logical":
@@ -67,6 +73,76 @@ func AuditOutput(category string, answer string) string {
 	}
 
 	return answer
+}
+
+// parseSentenceLimit extracts a sentence count target from the prompt if specified.
+func parseSentenceLimit(prompt string) int {
+	lower := strings.ToLower(prompt)
+	
+	// Check for patterns like "exactly N sentences", "in N sentences", etc.
+	re := regexp.MustCompile(`\b(?:exactly|in|to)\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+sentences?\b`)
+	matches := re.FindStringSubmatch(lower)
+	if len(matches) > 1 {
+		numStr := matches[1]
+		if n, err := strconv.Atoi(numStr); err == nil {
+			return n
+		}
+		switch numStr {
+		case "one":
+			return 1
+		case "two":
+			return 2
+		case "three":
+			return 3
+		case "four":
+			return 4
+		case "five":
+			return 5
+		case "six":
+			return 6
+		case "seven":
+			return 7
+		case "eight":
+			return 8
+		case "nine":
+			return 9
+		case "ten":
+			return 10
+		}
+	}
+
+	// Simpler match fallback: "N sentences"
+	reSimple := regexp.MustCompile(`\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+sentences?\b`)
+	matchesSimple := reSimple.FindStringSubmatch(lower)
+	if len(matchesSimple) > 1 {
+		numStr := matchesSimple[1]
+		if n, err := strconv.Atoi(numStr); err == nil {
+			return n
+		}
+		switch numStr {
+		case "one":
+			return 1
+		case "two":
+			return 2
+		case "three":
+			return 3
+		case "four":
+			return 4
+		case "five":
+			return 5
+		case "six":
+			return 6
+		case "seven":
+			return 7
+		case "eight":
+			return 8
+		case "nine":
+			return 9
+		case "ten":
+			return 10
+		}
+	}
+	return 0
 }
 
 // auditMath extracts a clean numerical value or expression from text
