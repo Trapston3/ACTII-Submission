@@ -106,16 +106,16 @@ func tierForModel(model string) int {
 	lower := strings.ToLower(model)
 
 	// Tier 1: Small, cheap, fast models
-	if containsAny(lower, "1.7b", "3b", "7b", "8b", "small", "mini", "tiny", "nano") {
+	if containsAny(lower, "1.7b", "3b", "7b", "8b", "small", "mini", "tiny", "nano", "glm-5p1", "glm-5p2") {
 		return 1
 	}
 
 	// Tier 3: Most capable, expensive models (reasoning, large-scale code)
-	if containsAny(lower, "r1", "k2", "405b", "large", "-code", "kimi", "deepseek") {
+	if containsAny(lower, "r1", "k2", "405b", "large", "-code", "kimi", "deepseek", "v4-pro") {
 		return 3
 	}
 
-	// Tier 2: Default mid-range (70b, mixtral, qwen-large, etc.)
+	// Tier 2: Default mid-range (70b, mixtral, qwen-large, gpt-oss, etc.)
 	return 2
 }
 
