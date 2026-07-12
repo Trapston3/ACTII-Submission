@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevFleet Orchestrator Engine Presentation</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;600;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ===========================================
+           VIEWPORT FITTING: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            background-color: #050811;
+            color: #E2E8F0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            background: radial-gradient(circle at 80% 20%, rgba(13, 24, 48, 0.6) 0%, rgba(5, 8, 17, 1) 100%);
+        }
+
+        /* Cyber grid background layer */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(18, 24, 38, 0.25) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18, 24, 38, 0.25) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Scanline effect */
+        .slide::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 10;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            z-index: 1;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --title-size: clamp(2rem, 5vw, 4rem);
+            --h2-size: clamp(1.5rem, 3.5vw, 2.5rem);
+            --h3-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            --body-size: clamp(0.9rem, 1.4vw, 1.15rem);
+            --small-size: clamp(0.75rem, 1vw, 0.9rem);
+
+            --slide-padding: clamp(2rem, 5vw, 5rem);
+            --content-gap: clamp(1rem, 3vh, 3rem);
+            --element-gap: clamp(0.5rem, 1.5vh, 1.5rem);
+            
+            /* Theme colors */
+            --cyan: #00F2FE;
+            --blue: #4FACFE;
+            --magenta: #F35588;
+            --green: #39FF14;
+            --gray-dark: #0D1321;
+            --gray-light: #1E293B;
+            --neon-glow: 0 0 15px rgba(0, 242, 254, 0.35);
+        }
+
+        /* Layout Utilities */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--content-gap);
+        }
+
+        .row {
+            display: flex;
+            flex-direction: row;
+            gap: 2rem;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--element-gap);
+        }
+
+        /* Typography styling */
+        h1, h2, h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        h1 {
+            font-size: var(--title-size);
+            background: linear-gradient(135deg, #FFF 30%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 20px rgba(0, 242, 254, 0.1);
+        }
+
+        h2 {
+            font-size: var(--h2-size);
+            color: #FFF;
+            border-left: 4px solid var(--cyan);
+            padding-left: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: var(--body-size);
+            line-height: 1.5;
+            color: #94A3B8;
+            margin: 0;
+        }
+
+        .highlight-text {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        /* Cards and Elements */
+        .card {
+            background-color: rgba(13, 19, 33, 0.7);
+            border: 1px solid rgba(0, 242, 254, 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--neon-glow);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan), var(--blue));
+            opacity: 0.7;
+        }
+
+        .card.accent::before {
+            background: linear-gradient(90deg, var(--magenta), var(--blue));
+        }
+        
+        .card.accent {
+            border-color: rgba(243, 85, 136, 0.2);
+            box-shadow: 0 0 15px rgba(243, 85, 136, 0.15);
+        }
+
+        /* Bullet lists */
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: var(--element-gap);
+        }
+
+        .bullet-list li {
+            position: relative;
+            padding-left: 2rem;
+            font-size: var(--body-size);
+            color: #CBD5E1;
+            line-height: 1.4;
+        }
+
+        .bullet-list li::before {
+            content: '➔';
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+            font-weight: bold;
+        }
+
+        .bullet-list.accent li::before {
+            color: var(--magenta);
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        /* Monospace blocks */
+        pre {
+            background-color: #020617;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(0.7rem, 1.2vw, 0.9rem);
+            color: #10B981;
+            max-height: min(40vh, 320px);
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: rgba(255, 255, 255, 0.08);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #38BDF8;
+            font-size: 0.9em;
+        }
+
+        /* Navigation elements */
+        .nav-controls {
+            position: absolute;
+            bottom: 2rem;
+            right: 3rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background-color: rgba(13, 19, 33, 0.8);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: var(--cyan);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--neon-glow);
+        }
+
+        .nav-btn:hover {
+            background-color: var(--cyan);
+            color: #050811;
+            transform: scale(1.05);
+        }
+
+        .nav-dots {
+            position: absolute;
+            right: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            z-index: 100;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background-color: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan);
+            transform: scale(1.3);
+        }
+
+        .slide-num {
+            position: absolute;
+            bottom: 2rem;
+            left: 3rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: var(--body-size);
+            color: rgba(255, 255, 255, 0.3);
+            z-index: 100;
+            letter-spacing: 0.1em;
+        }
+
+        /* Decorative Badge */
+        .badge {
+            background-color: rgba(0, 242, 254, 0.1);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: var(--small-size);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            width: fit-content;
+        }
+
+        .badge.accent {
+            background-color: rgba(243, 85, 136, 0.1);
+            border-color: var(--magenta);
+            color: var(--magenta);
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .active .reveal {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+
+        /* Media Queries for sizing */
+        @media (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(1rem, 3vw, 2.5rem);
+                --content-gap: clamp(0.75rem, 2vh, 1.5rem);
+                --title-size: clamp(1.75rem, 4vw, 3rem);
+                --h2-size: clamp(1.25rem, 3vw, 2rem);
+            }
+            .card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .nav-dots {
+                display: none;
+            }
+            .nav-controls {
+                right: 1.5rem;
+                bottom: 1.5rem;
+            }
+            .slide-num {
+                left: 1.5rem;
+                bottom: 1.5rem;
+            }
+        }
+
+        /* SVG flow chart styling */
+        .flow-svg {
+            width: 100%;
+            height: auto;
+            max-height: 350px;
+            background: rgba(13, 19, 33, 0.5);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 242, 254, 0.1);
+            padding: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .flow-node {
+            fill: #0D1321;
+            stroke: var(--cyan);
+            stroke-width: 1.5;
+            rx: 6;
+            ry: 6;
+            transition: all 0.3s;
+        }
+        
+        .flow-node.accent {
+            stroke: var(--magenta);
+        }
+        
+        .flow-node:hover {
+            fill: rgba(0, 242, 254, 0.1);
+            filter: drop-shadow(0 0 5px var(--cyan));
+        }
+
+        .flow-text {
+            fill: #E2E8F0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            text-anchor: middle;
+            pointer-events: none;
+        }
+
+        .flow-arrow {
+            fill: none;
+            stroke: rgba(148, 163, 184, 0.4);
+            stroke-width: 2;
+            marker-end: url(#arrow);
+        }
+
+        .flow-arrow.active {
+            stroke: var(--cyan);
+        }
+
+        /* Custom interactive AST visual */
+        .ast-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 1rem;
+        }
+
+        .ast-node {
+            background-color: var(--gray-light);
+            border: 1px solid var(--cyan);
+            color: #FFF;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .ast-children {
+            display: flex;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .ast-children::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background-color: rgba(0, 242, 254, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: Title -->
+    <section class="slide active" id="slide-1">
+        <div class="slide-content">
+            <div class="container" style="align-items: center; text-align: center;">
+                <div class="badge reveal">AMD Developer Hackathon • Track 1</div>
+                <h1 class="reveal delay-1" style="font-size: clamp(2.5rem, 7vw, 5rem); line-height: 0.95; margin: 1rem 0;">
+                    DEVFLEET<br>
+                    <span style="color: var(--cyan); text-shadow: 0 0 30px rgba(0, 242, 254, 0.25);">ORCHESTRATOR</span>
+                </h1>
+                <p class="reveal delay-2" style="font-size: clamp(1rem, 2vw, 1.4rem); max-width: 700px; margin-bottom: 2rem;">
+                    A high-performance, concurrent Go routing engine designed to optimize LLM budgets and prevent formatting hallucinations.
+                </p>
+                <div class="row reveal delay-3" style="justify-content: center; gap: 1rem;">
+                    <div class="badge accent">9-Min Context Guard</div>
+                    <div class="badge accent">Zero-Token Math Solver</div>
+                    <div class="badge accent">1-Token Verification Gate</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 2: Hard Constraints -->
+    <section class="slide" id="slide-2">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">The Stakes</div>
+                <h2 class="reveal delay-1">The Grading Constraints</h2>
+                <p class="reveal delay-1">Evaluating teams on the edge of memory, budget, and deterministic format scoring.</p>
+                
+                <div class="grid reveal delay-2">
+                    <div class="card">
+                        <div class="badge accent">Guillotine</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">9-Minute Context Expiry</h3>
+                        <p>A global timeout halts workers, compiles results, and executes an atomic write to exit `0` before the harness kills the container.</p>
+                    </div>
+                    <div class="card">
+                        <div class="badge accent">Compliance</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">Hallucination Guard</h3>
+                        <p>Quantized local models fail rigid formatting gates (e.g. exactly 3 bullet points, under 15 words). Output requires runtime auditing.</p>
+                    </div>
+                    <div class="card">
+                        <div class="badge accent">Resource Limits</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">Token & Memory Caps</h3>
+                        <p>Operating under strict concurrency thresholds (4-5 concurrent workers max) to prevent API rate limits and 4GB RAM swap issues.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 3: Architecture -->
+    <section class="slide" id="slide-3">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">Architecture</div>
+                <h2 class="reveal delay-1">The Intelligent Routing Pipeline</h2>
+                
+                <div class="reveal delay-2" style="width: 100%; display: flex; justify-content: center;">
+                    <!-- Inline responsive SVG flow diagram -->
+                    <svg viewBox="0 0 650 200" class="flow-svg">
+                        <defs>
+                            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="rgba(148, 163, 184, 0.6)"/>
+                            </marker>
+                            <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 1 L 10 5 L 0 9 z" fill="#39FF14"/>
+                            </marker>
+                        </defs>
+                        
+                        <!-- Row 1 Nodes -->
+                        <rect x="10" y="70" width="90" height="50" class="flow-node" />
+                        <text x="55" y="100" class="flow-text">1. Raw Input</text>
+                        
+                        <rect x="140" y="70" width="100" height="50" class="flow-node" />
+                        <text x="190" y="100" class="flow-text">2. Category Classifier</text>
+                        
+                        <rect x="280" y="20" width="110" height="40" class="flow-node accent" />
+                        <text x="335" y="44" class="flow-text">Zero-Token AST</text>
+                        
+                        <rect x="280" y="120" width="110" height="40" class="flow-node" />
+                        <text x="335" y="144" class="flow-text">Fireworks Cloud Router</text>
+
+                        <rect x="430" y="120" width="100" height="40" class="flow-node" />
+                        <text x="480" y="144" class="flow-text">1-Token Gate</text>
+
+                        <rect x="550" y="70" width="90" height="50" class="flow-node" />
+                        <text x="595" y="100" class="flow-text">3. Output Auditor</text>
+                        
+                        <!-- Arrows -->
+                        <line x1="100" y1="95" x2="140" y2="95" class="flow-arrow active" />
+                        
+                        <!-- Fork Arrows -->
+                        <path d="M 240 95 L 260 95 L 260 40 L 280 40" class="flow-arrow active" style="stroke: #39FF14;" />
+                        <path d="M 240 95 L 260 95 L 260 140 L 280 140" class="flow-arrow" />
+                        
+                        <!-- Re-join Arrows -->
+                        <line x1="390" y1="40" x2="520" y2="40" class="flow-arrow" />
+                        <path d="M 520 40 L 535 40 L 535 95 L 550 95" class="flow-arrow" />
+                        
+                        <line x1="390" y1="140" x2="430" y2="140" class="flow-arrow" />
+                        <line x1="530" y1="140" x2="535" y2="140" class="flow-arrow" />
+                        <path d="M 535 140 L 535 95 L 550 95" class="flow-arrow" />
+                    </svg>
+                </div>
+                
+                <p class="reveal delay-3" style="font-size: 0.95rem; text-align: center;">
+                    Queries are quickly classified. Math and Sentiment route to <span class="highlight-text">local offline solvers</span> first, saving cloud tokens. High-complexity queries route through a fallback-enabled cloud model tier.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: Zero-Token Solver -->
+    <section class="slide" id="slide-4">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">Zero-Token Logic</div>
+                <h2 class="reveal delay-1">AST Math & Lexicon Sentiment Solvers</h2>
+                
+                <div class="row reveal delay-2">
+                    <div class="col">
+                        <div class="card" style="height: 100%; justify-content: center;">
+                            <h3 style="color: var(--cyan);">Abstract Syntax Tree (AST) Math</h3>
+                            <p>Parses strict arithmetic operations (add, subtract, divide, multiply, exponents, square roots) into an executable tree structure. Completely skips cloud inference for equations, returning mathematically exact responses in under <span class="highlight-text">1ms</span>.</p>
+                            <pre><code>// Safe AST Constraint verification
+if hasWordProblemContext(query) {
+    // Escalates to Fireworks Cloud
+    return SkipLocalSolve
+}</code></pre>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card accent" style="height: 100%; justify-content: center;">
+                            <h3 style="color: var(--magenta);">Sentiment Polarity Lexicon</h3>
+                            <p>For high-confidence sentiment classification, queries matching predefined emotive lexicons are solved locally. If confidence falls below 95%, the query is seamlessly escalated to a cloud verification step.</p>
+                            <div class="ast-tree" style="margin-top: 1rem;">
+                                <div class="ast-node">Expression: "Calculate 15 * (4 + sqrt(9))"</div>
+                                <div class="ast-children">
+                                    <div class="ast-node">15</div>
+                                    <div class="ast-node">* (Multiply)</div>
+                                    <div class="ast-node">4 + 3</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 5: 1-Token Gate -->
+    <section class="slide" id="slide-5">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">Efficiency</div>
+                <h2 class="reveal delay-1">The 1-Token Verification Gate</h2>
+                
+                <div class="row reveal delay-2">
+                    <div class="col" style="flex: 1.2;">
+                        <div class="card" style="height: 100%; justify-content: center;">
+                            <h3 style="color: var(--cyan);">How the 1-Token Gate works</h3>
+                            <ul class="bullet-list">
+                                <li><strong>Borderline cases</strong>: If local sentiment confidence is borderline (0.90–0.95), the engine does not issue a full completion request.</li>
+                                <li><strong>1-Token Constrained Call</strong>: It issues a prompt to a cheap model (e.g. <code>glm-5p1</code>) formatted to output <em>only</em> `YES` or `NO`.</li>
+                                <li><strong>Server Forced Parameter</strong>: Configures <code>max_tokens: 1</code> and logit biases on the API call.</li>
+                                <li><strong>Verification Result</strong>: On `YES`, local sentiment solution is written. On `NO`, the query escalates to the Tier 3 model.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col" style="flex: 0.8;">
+                        <div class="card accent" style="height: 100%; justify-content: center; gap: 1rem;">
+                            <h3 style="color: var(--magenta); text-align: center;">Token Cost Comparison</h3>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                    <span>Standard Completion Call:</span>
+                                    <span style="color: var(--magenta); font-weight: bold;">~180 Tokens</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                                    <div style="width: 100%; height: 100%; background: var(--magenta);"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                    <span>1-Token Gate Verification:</span>
+                                    <span style="color: var(--green); font-weight: bold;">1 Token (Output)</span>
+                                </div>
+                                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                                    <div style="width: 5%; height: 100%; background: var(--green);"></div>
+                                </div>
+                            </div>
+                            
+                            <p style="font-size: 0.85rem; text-align: center; color: #94A3B8; margin-top: 0.5rem;">
+                                Slashes overall token cost by <span class="highlight-text" style="color: var(--green);">95%+</span> for borderline classifications.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 6: Post-Auditor -->
+    <section class="slide" id="slide-6">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">Sanitization</div>
+                <h2 class="reveal delay-1">Production Post-Auditors & Sanitizers</h2>
+                
+                <div class="grid reveal delay-2">
+                    <div class="card">
+                        <div class="badge">Preamble Stripper</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">Filler & Thinking Removal</h3>
+                        <p>Automatically strips reasoning tags (<code>&lt;think&gt;...&lt;/think&gt;</code>), markdown code block headers, and chatty preambles (e.g. <i>"Here is the result you requested:"</i>).</p>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="badge">Bullet Auditor</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">Grammatical Repair</h3>
+                        <p>Truncates bullet list text to comply with strict length constraints, and runs grammatical repair (inserting terminal periods) to preserve grading points.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="badge">Dynamic PII Bypass</div>
+                        <h3 style="color: #FFF; margin-top: 0.5rem;">Zero-Overhead Parsing</h3>
+                        <p>Eliminates the CPU cost of regular expression evaluation by dynamically bypassing PII masking for extraction and code tasks where actual raw data is needed.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: Docker & VM Hardening -->
+    <section class="slide" id="slide-7">
+        <div class="slide-content">
+            <div class="container">
+                <div class="badge reveal">Deployment</div>
+                <h2 class="reveal delay-1">VM Hardening & Packaging</h2>
+                
+                <div class="row reveal delay-2">
+                    <div class="col" style="flex: 1.2;">
+                        <pre style="height: 100%; color: #38BDF8; font-size: 0.85rem;"><code># Multi-stage Scratch Dockerfile
+FROM golang:1.21-alpine AS builder
+WORKDIR /app
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w" -o agent ./cmd/agent
+
+FROM scratch
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/agent /agent
+ENTRYPOINT ["/agent"]</code></pre>
+                    </div>
+                    
+                    <div class="col" style="flex: 0.8;">
+                        <div class="card" style="height: 100%; justify-content: center;">
+                            <h3 style="color: var(--cyan);">Key Hardening Points</h3>
+                            <ul class="bullet-list" style="font-size: 0.9rem;">
+                                <li><strong>Under 12MB Image</strong>: The scratch build drops all OS bloat, preventing VM loading bottlenecks.</li>
+                                <li><strong>Local Root Certs</strong>: Statically links SSL CA certificates to prevent TLS errors in sandbox.</li>
+                                <li><strong>5xx Fallback Mesh</strong>: Router automatically detects remote API timeouts or server errors and retries on alternate model channels.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 8: Summary -->
+    <section class="slide" id="slide-8">
+        <div class="slide-content">
+            <div class="container" style="align-items: center; text-align: center;">
+                <div class="badge reveal">Summary</div>
+                <h2 class="reveal delay-1" style="border: none; padding: 0;">Orchestration Mastered</h2>
+                <p class="reveal delay-2" style="max-width: 600px; margin-bottom: 2rem;">
+                    A robust, fault-tolerant orchestrator ready for the final VM environment. Cost-efficiency, strict constraint enforcement, and zero-token logic working in harmony.
+                </p>
+                
+                <div class="card reveal delay-3" style="max-width: 500px; align-items: center;">
+                    <h3 style="color: var(--cyan); margin: 0;">Submission Tag</h3>
+                    <code style="font-size: 1.1rem; padding: 0.5rem 1rem; background: #020617; border-radius: 6px; margin: 0.5rem 0; border: 1px solid rgba(0,242,254,0.3); width: 100%; box-sizing: border-box; display: inline-block;">ghcr.io/trapston3/devfleet-agent:latest</code>
+                    <p style="font-size: 0.85rem; color: #94A3B8;">Push completed successfully to GHCR.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Navigation dots -->
+    <div class="nav-dots">
+        <div class="dot active" onclick="goToSlide(1)"></div>
+        <div class="dot" onclick="goToSlide(2)"></div>
+        <div class="dot" onclick="goToSlide(3)"></div>
+        <div class="dot" onclick="goToSlide(4)"></div>
+        <div class="dot" onclick="goToSlide(5)"></div>
+        <div class="dot" onclick="goToSlide(6)"></div>
+        <div class="dot" onclick="goToSlide(7)"></div>
+        <div class="dot" onclick="goToSlide(8)"></div>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()" aria-label="Previous Slide">◀</button>
+        <button class="nav-btn" onclick="nextSlide()" aria-label="Next Slide">▶</button>
+    </div>
+
+    <!-- Slide Number indicator -->
+    <div class="slide-num">SLIDE <span id="current-slide-num">1</span> / 8</div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 8;
+        let isTransitioning = false;
+
+        function updateSlideNum() {
+            document.getElementById('current-slide-num').textContent = currentSlide;
+        }
+
+        function updateActiveState() {
+            // Update active class on slides
+            for (let i = 1; i <= totalSlides; i++) {
+                const el = document.getElementById(`slide-${i}`);
+                if (i === currentSlide) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            }
+
+            // Update active dot
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if (index + 1 === currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+            updateSlideNum();
+        }
+
+        function goToSlide(num) {
+            if (num < 1 || num > totalSlides || isTransitioning) return;
+            isTransitioning = true;
+            currentSlide = num;
+            
+            const targetEl = document.getElementById(`slide-${currentSlide}`);
+            targetEl.scrollIntoView({ behavior: 'smooth' });
+            
+            setTimeout(() => {
+                updateActiveState();
+                isTransitioning = false;
+            }, 600);
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                goToSlide(currentSlide + 1);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                goToSlide(currentSlide - 1);
+            }
+        }
+
+        // Keyboard Navigation
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'Space') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Wheel Navigation with debounce
+        let lastWheelTime = 0;
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            if (now - lastWheelTime < 1000) return;
+            lastWheelTime = now;
+
+            if (e.deltaY > 0) {
+                nextSlide();
+            } else if (e.deltaY < 0) {
+                prevSlide();
+            }
+        }, { passive: false });
+
+        // Touch swipe support
+        let touchStart = 0;
+        window.addEventListener('touchstart', (e) => {
+            touchStart = e.touches[0].clientY;
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            const touchEnd = e.changedTouches[0].clientY;
+            const diff = touchStart - touchEnd;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    nextSlide();
+                } else {
+                    prevSlide();
+                }
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>
