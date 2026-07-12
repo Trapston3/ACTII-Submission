@@ -22,19 +22,19 @@ type Config struct {
 // Returns a non-nil error if any required variable is missing or malformed.
 // Callers should treat a non-nil error as fatal and exit immediately.
 func Load() (*Config, error) {
-	apiKey := os.Getenv("FIREWORKS_API_KEY")
+	apiKey := stripQuotes(os.Getenv("FIREWORKS_API_KEY"))
 	if apiKey == "" {
 		return nil, fmt.Errorf("FIREWORKS_API_KEY is required but not set")
 	}
 
-	baseURL := os.Getenv("FIREWORKS_BASE_URL")
+	baseURL := stripQuotes(os.Getenv("FIREWORKS_BASE_URL"))
 	if baseURL == "" {
 		return nil, fmt.Errorf("FIREWORKS_BASE_URL is required but not set")
 	}
 	// Normalize: strip trailing slash for consistent URL construction downstream
 	baseURL = strings.TrimRight(baseURL, "/")
 
-	modelsRaw := os.Getenv("ALLOWED_MODELS")
+	modelsRaw := stripQuotes(os.Getenv("ALLOWED_MODELS"))
 	if modelsRaw == "" {
 		return nil, fmt.Errorf("ALLOWED_MODELS is required but not set")
 	}
@@ -139,4 +139,17 @@ func filterEmpty(ss []string) []string {
 		}
 	}
 	return result
+}
+
+// stripQuotes removes surrounding double or single quotes from a string.
+// Handles the common case where .env files wrap values in quotes that get
+// passed literally into environment variables by some loaders.
+func stripQuotes(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) >= 2 {
+		if (s[0] == '"' && s[len(s)-1] == '"') || (s[0] == '\'' && s[len(s)-1] == '\'') {
+			s = s[1 : len(s)-1]
+		}
+	}
+	return s
 }

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -227,9 +228,13 @@ func (c *Client) doPost(ctx context.Context, reqBody models.ChatRequest) (models
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		// Read the error response body for diagnostic logging
+		var errBody []byte
+		errBody, _ = io.ReadAll(io.LimitReader(resp.Body, 1024))
+		log.Printf("[DEBUG] Fireworks API error response (status %d): %s", resp.StatusCode, string(errBody))
 		return models.ChatResponse{}, &apiError{
 			statusCode: resp.StatusCode,
-			message:    fmt.Sprintf("Fireworks API returned status %d %s", resp.StatusCode, resp.Status),
+			message:    fmt.Sprintf("Fireworks API returned status %d %s: %s", resp.StatusCode, resp.Status, string(errBody)),
 		}
 	}
 
