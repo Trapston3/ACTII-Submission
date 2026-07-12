@@ -4,6 +4,5 @@
 docs/
 *_test.go
 testdata/
-go.sum
 LICENSE
 .dockerignore
