@@ -3,3 +3,4 @@
 docs/
 testdata/
 /local_tests/
+.env

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -194,7 +195,17 @@ func (c *Client) TotalTokens() int64 {
 }
 
 func (c *Client) doPost(ctx context.Context, reqBody models.ChatRequest) (models.ChatResponse, error) {
-	url := fmt.Sprintf("%s/v1/chat/completions", c.config.BaseURL)
+	baseURL := strings.TrimRight(c.config.BaseURL, "/")
+	if !strings.HasSuffix(baseURL, "/chat/completions") {
+		if strings.HasSuffix(baseURL, "/v1") {
+			baseURL += "/chat/completions"
+		} else {
+			baseURL += "/v1/chat/completions"
+		}
+	}
+	url := baseURL
+	log.Printf("[DEBUG] Fireworks API Request URL: %s", url)
+	log.Printf("[DEBUG] Using Model: %s", reqBody.Model)
 
 	data, err := json.Marshal(reqBody)
 	if err != nil {
