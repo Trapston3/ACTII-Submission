@@ -54,7 +54,20 @@ func (r *Router) SelectModel(category string) string {
 				return m
 			}
 		}
-		// If forced to fall back to a weak model like glm-5p1, use it
+		// If cheap non-reasoning models are not available, use gpt-oss-120b or other non-reasoning standard models.
+		// These are highly accurate, do not have reasoning token overhead in content, and consume fewer total tokens than glm-5p1.
+		for _, name := range []string{"gpt-oss-120b", "llama-v3p3-70b-instruct", "qwen2.5-72b-instruct"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+		// Next, prefer deepseek-v4-pro because it separates reasoning tokens cleanly, avoiding formatting corruption.
+		for _, name := range []string{"deepseek-v4-pro", "glm-5p2"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+		// If forced to fall back to a weak reasoning model like glm-5p1, use it
 		for _, name := range []string{"glm-5p1", "gpt-oss-20b", "deepseek-v4-flash", "minimax"} {
 			if m, found := findModel(name); found {
 				return m
@@ -62,13 +75,19 @@ func (r *Router) SelectModel(category string) string {
 		}
 
 	case models.CategorySummarize, models.CategoryFactual:
-		// Tier 2 (Summarization, Factual): Prioritize llama-v3p3-70b-instruct, qwen2.5-72b-instruct
+		// Tier 2 (Summarization, Factual): Prioritize llama-v3p3-70b-instruct, qwen2.5-72b-instruct, gpt-oss-120b
 		for _, name := range []string{"llama-v3p3-70b-instruct", "qwen2.5-72b-instruct", "gpt-oss-120b", "qwen3", "llama-70b-std"} {
 			if m, found := findModel(name); found {
 				return m
 			}
 		}
-		// Fallback to Tier 1 cheapest models if Tier 2 is missing
+		// Next, prefer deepseek-v4-pro (Tier 3 but extremely accurate and clean)
+		for _, name := range []string{"deepseek-v4-pro"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+		// Fallback to Tier 1 cheapest models if Tier 2/3 is missing
 		for _, name := range []string{"gemma-2-9b-it", "llama-v3p1-8b-instruct", "llama-8b-small", "llama-8b-cheap", "glm-5p1", "deepseek-v4-flash"} {
 			if m, found := findModel(name); found {
 				return m
@@ -78,6 +97,18 @@ func (r *Router) SelectModel(category string) string {
 	case models.CategoryCodeGen, models.CategoryCodeDebug, models.CategoryMath, models.CategoryLogical:
 		// Tier 3 (Math, Logic, Code): Prioritize deepseek-v4-pro, deepseek-r1, glm-5p2, kimi-k2p7-code, deepseek-r1-heavy
 		for _, name := range []string{"deepseek-v4-pro", "deepseek-r1", "glm-5p2", "kimi-k2p7-code", "deepseek-r1-heavy"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+		// Fallback to Tier 2 models if Tier 3 is missing
+		for _, name := range []string{"gpt-oss-120b", "llama-v3p3-70b-instruct", "qwen2.5-72b-instruct", "qwen3", "llama-70b-std"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+		// Fallback to Tier 1 cheapest models
+		for _, name := range []string{"gemma-2-9b-it", "llama-v3p1-8b-instruct", "llama-8b-small", "llama-8b-cheap", "glm-5p1", "deepseek-v4-flash"} {
 			if m, found := findModel(name); found {
 				return m
 			}

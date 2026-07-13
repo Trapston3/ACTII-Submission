@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -169,18 +170,37 @@ func processTask(
 
 	// F. Dynamic max_tokens cap based on category
 	maxTokens := client.MaxTokensForCategory(category)
+	if strings.Contains(strings.ToLower(model), "glm") || strings.Contains(strings.ToLower(model), "deepseek") {
+		if category == models.CategoryCodeGen || category == models.CategoryCodeDebug {
+			maxTokens = 800
+		} else if category == models.CategoryMath || category == models.CategoryLogical || category == models.CategorySummarize {
+			maxTokens = 500
+		} else {
+			maxTokens = 400
+		}
+	}
 
 	// G. Fireworks API invocation with cross-model fallback
 	log.Printf("[Task %s] Routing to Fireworks (%s, category: %s, maxTokens: %d)", taskID, model, category, maxTokens)
 	systemPrompt := client.SystemPrompt(category)
 
-	ans, _, err := apiClient.Complete(ctx, model, systemPrompt, optimizedPrompt, maxTokens)
+	ans, _, err := apiClient.Complete(ctx, model, systemPrompt, optimizedPrompt, maxTokens, category)
 	if err != nil {
 		log.Printf("[Task %s] Primary model %s failed: %v. Attempting cross-model fallback...", taskID, model, err)
 		fallbackModel := taskRouter.GetNextFallbackModel(model)
 		if fallbackModel != "" {
 			log.Printf("[Task %s] Escalating fallback to model: %s", taskID, fallbackModel)
-			ans, _, err = apiClient.Complete(ctx, fallbackModel, systemPrompt, optimizedPrompt, maxTokens)
+			fallbackMaxTokens := client.MaxTokensForCategory(category)
+			if strings.Contains(strings.ToLower(fallbackModel), "glm") || strings.Contains(strings.ToLower(fallbackModel), "deepseek") {
+				if category == models.CategoryCodeGen || category == models.CategoryCodeDebug {
+					fallbackMaxTokens = 800
+				} else if category == models.CategoryMath || category == models.CategoryLogical || category == models.CategorySummarize {
+					fallbackMaxTokens = 500
+				} else {
+					fallbackMaxTokens = 400
+				}
+			}
+			ans, _, err = apiClient.Complete(ctx, fallbackModel, systemPrompt, optimizedPrompt, fallbackMaxTokens, category)
 		}
 	}
 

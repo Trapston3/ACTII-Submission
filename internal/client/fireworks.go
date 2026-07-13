@@ -73,6 +73,7 @@ func (c *Client) Complete(
 	systemPrompt string,
 	userPrompt string,
 	maxTokens int,
+	category string,
 ) (string, models.TokenUsage, error) {
 	reqBody := models.ChatRequest{
 		Model:       model,
@@ -123,7 +124,7 @@ func (c *Client) Complete(
 	content = thinkTagRe.ReplaceAllString(content, "")
 
 	// 4. Sanitize output: strip markdown fences, preambles, sign-offs
-	content = sanitizeOutput(content)
+	content = sanitizeOutput(content, category)
 
 	return content, respBody.Usage, nil
 }
@@ -266,18 +267,20 @@ func isTransient(err error) bool {
 // sanitizeOutput strips common LLM output artifacts that the evaluation judge
 // will penalize: markdown code fences, leading preamble phrases, and trailing
 // sign-off noise. Called after think-tag stripping.
-func sanitizeOutput(content string) string {
+func sanitizeOutput(content string, category string) string {
 	// 1. Unwrap markdown code fences → extract inner content
 	content = codeFenceRe.ReplaceAllString(content, "$1")
 
-	// 2. Strip leading preamble phrases ("Here's the answer:", etc.)
-	content = preambleRe.ReplaceAllString(content, "")
+	if category != "code_generation" && category != "code_debugging" {
+		// 2. Strip leading preamble phrases ("Here's the answer:", etc.)
+		content = preambleRe.ReplaceAllString(content, "")
 
-	// 3. Strip trailing sign-off noise ("Let me know if...", etc.)
-	content = signoffRe.ReplaceAllString(content, "")
+		// 3. Strip trailing sign-off noise ("Let me know if...", etc.)
+		content = signoffRe.ReplaceAllString(content, "")
 
-	// 4. Strip chain-of-thought and meta-analysis lines
-	content = stripMetaAnalysis(content)
+		// 4. Strip chain-of-thought and meta-analysis lines
+		content = stripMetaAnalysis(content)
+	}
 
 	// 5. Normalize whitespace and trim
 	content = strings.TrimSpace(content)
@@ -290,7 +293,7 @@ func stripMetaAnalysis(content string) string {
 	var cleanedLines []string
 	
 	// Skip lines matching common reasoning/analysis placeholders
-	metaRe := regexp.MustCompile(`(?i)^\s*[-*•\d\.]*\s*\**\b(analyze|request|constraints|determine the answer|format the output|step \d+|let's analyze|let us analyze|to solve this|we need to|question|prompt|input text|task|instruction)\b`)
+	metaRe := regexp.MustCompile(`(?i)^\s*[-*•\d\.]*\s*\**\b(analyze|request|constraint|determine|algorithm|format|step|let's|let us|to solve|we need|question|prompt|input|task|instruction|thought|thinking|reason|explanation|justification|draft)\b`)
 	
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
