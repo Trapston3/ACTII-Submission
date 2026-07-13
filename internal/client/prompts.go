@@ -12,23 +12,23 @@ const terseSuffix = " Do not explain. Do not use markdown. Plain text only."
 func SystemPrompt(category string) string {
 	switch category {
 	case "math":
-		return "Solve the mathematical problem. Return ONLY the final numerical answer or expression. Do not show work or explanations unless requested by the prompt. Plain text only. No markdown."
+		return "Solve the math problem. Output only the final numerical answer or expression. No explanations or markdown."
 	case "sentiment":
-		return "Classify the sentiment of the text. State the label (Positive, Negative, Mixed, or Neutral), followed by a colon and a one-sentence justification. Example: 'Positive: The tone is highly enthusiastic and appreciative.' Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
+		return "Classify sentiment as Positive, Negative, Neutral, or Mixed. Format: 'Label: One-sentence justification'. No conversational filler, intro, or markdown."
 	case "ner":
-		return "Identify all named entities mentioned in the input text and extract them with their corresponding type labels. Format the output as a comma-separated list where each entity is followed by its type in parentheses, like: Entity Name (TYPE). Example: Barack Obama (PERSON), Hawaii (LOCATION). Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
+		return "Extract named entities in format: Name (TYPE). Example: John Doe (PERSON), Paris (LOCATION). Comma-separated. No intro, filler, or markdown."
 	case "factual":
-		return "Answer the question directly, accurately, and concisely. Fulfill all parts of the question. Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
+		return "Answer directly, accurately, and concisely. Plain text only. No conversational filler, intro, or markdown."
 	case "summarization":
-		return "Summarize the text in 2-3 concise sentences. Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
+		return "Summarize the text in 2-3 concise sentences. Plain text only. No conversational filler, intro, or markdown."
 	case "code_generation":
-		return "Write the requested code. Return ONLY the raw code. Do not wrap in markdown code blocks. Do not write any explanations or introduction."
+		return "Write the requested code. Return ONLY the raw code. No markdown blocks, intro, or explanations."
 	case "code_debugging":
-		return "Fix the bug in the provided code. Return ONLY the corrected code. Do not wrap in markdown code blocks. Do not write any explanations."
+		return "Fix the bug. Return ONLY the corrected code. No markdown blocks, intro, or explanations."
 	case "logical":
-		return "Solve the logic puzzle. Return ONLY the direct answer. Plain text only."
+		return "Solve the logic puzzle. Output ONLY the direct answer. Plain text only."
 	default:
-		return "Answer the prompt concisely and directly. Plain text only."
+		return "Answer concisely. Plain text only."
 	}
 }
 
@@ -38,22 +38,22 @@ func SystemPrompt(category string) string {
 func MaxTokensForCategory(category string) int {
 	switch category {
 	case "math":
-		return 150 // Allow sufficient tokens for expression outputs
+		return 150 // Allow enough space for reasoning + expression output
 	case "sentiment":
-		return 500 // Label + one-sentence justification (bumped to allow reasoning space)
+		return 300 // Label + one-sentence justification
 	case "ner":
-		return 200 // List of entities with types
+		return 300 // List of entities with types
 	case "factual":
-		return 250 // 1-2 sentences with explanation if needed
+		return 300 // Concise 1-2 sentence response
 	case "summarization":
-		return 300 // 2-3 sentences
+		return 350 // Concise 2-3 sentence summary
 	case "code_generation":
 		return 800 // Code can be longer
 	case "code_debugging":
 		return 800 // Code can be longer
 	case "logical":
-		return 200 // Logic puzzles can have structured responses
+		return 150 // Logic puzzles can have structured responses
 	default:
-		return 250 // General catch-all
+		return 200 // General catch-all
 	}
 }

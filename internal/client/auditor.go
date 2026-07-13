@@ -177,29 +177,55 @@ func auditMath(answer string) string {
 // auditNER converts bulleted/numbered entity lists into a clean comma-separated list
 func auditNER(answer string) string {
 	lines := strings.Split(answer, "\n")
+	typeRe := regexp.MustCompile(`\([A-Z]{2,}\)`)
+
+	// First, check if any line contains a parenthesized uppercase type label
+	hasTypedEntity := false
+	for _, line := range lines {
+		if typeRe.MatchString(line) {
+			hasTypedEntity = true
+			break
+		}
+	}
+
 	var entities []string
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" {
 			continue
 		}
-		// Strip leading bullet markers or numbers (e.g. "- Apple (ORG)", "1. Google (ORG)")
+		// If the response contains typed entities, skip lines that don't have them
+		if hasTypedEntity && !typeRe.MatchString(trimmed) {
+			continue
+		}
+		// Strip leading bullet markers or numbers (e.g. "- Apple (ORG)")
 		cleaned := regexp.MustCompile(`^\s*[-*•\d]+\.?\s*`).ReplaceAllString(trimmed, "")
-		// Strip trailing periods/commas but NOT parentheses
-		cleaned = strings.Trim(cleaned, `., `)
-		if cleaned != "" {
-			entities = append(entities, cleaned)
+		// Handle comma-separated entities on the same line
+		parts := strings.Split(cleaned, ",")
+		for _, part := range parts {
+			entity := strings.Trim(part, `., `)
+			if entity != "" {
+				if !hasTypedEntity || typeRe.MatchString(entity) {
+					entities = append(entities, entity)
+				}
+			}
 		}
 	}
+
 	if len(entities) > 0 {
 		return strings.Join(entities, ", ")
 	}
+
 	// Fallback to splitting by commas if no lines/lists found
 	parts := strings.Split(answer, ",")
-	for i, p := range parts {
-		parts[i] = strings.Trim(p, `., `)
+	var cleanedParts []string
+	for _, p := range parts {
+		trimmed := strings.Trim(p, `., `)
+		if trimmed != "" {
+			cleanedParts = append(cleanedParts, trimmed)
+		}
 	}
-	return strings.Join(parts, ", ")
+	return strings.Join(cleanedParts, ", ")
 }
 
 // isBulletedList returns true if the text has multiple lines starting with list markers
@@ -287,7 +313,9 @@ func auditSentiment(answer string) string {
 	}
 
 	// Limit total sentences of the explanation/justification
-	cleaned := sentimentRe.ReplaceAllString(answer, "")
+	// Strip ONLY the leading label/prefix to avoid stripping keywords from the justification body
+	leadingSentimentRe := regexp.MustCompile(`(?i)^\s*(positive|negative|neutral|mixed)\s*[:,\.-]?\s*`)
+	cleaned := leadingSentimentRe.ReplaceAllString(answer, "")
 	cleaned = strings.TrimLeft(cleaned, ":,.- ")
 	cleaned = strings.TrimSpace(cleaned)
 	justification := limitSentences(cleaned, 2)

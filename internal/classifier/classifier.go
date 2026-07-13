@@ -63,7 +63,7 @@ func init() {
 
 		// ── Math ─────────────────────────────────────────────────────────────
 		{
-			`(?i)\b(calculat(e|ion)|comput(e|ation)|solv(e|ing)\s+(the\s+)?(equation|expression|formula)|what\s+is\s+[-+]?\d+|how\s+(much|many)\s+is\s+[-+]?\d+|\bsum\b|\bproduct\b|\bdifference\b|\bquotient\b|square\s+root|sqrt|\bpercent(age)?\b|\baverage\b|\bmean\b|\bmedian\b|\bmode\b|prime\s+number|factorial|fibonacci|\barea\b|\bvolume\b|\bperimeter\b|multiply|divide|subtract|add)\b`,
+			`(?i)\b(calculat(e|ion)|comput(e|ation)|solv(e|ing)\s+(the\s+)?(equation|expression|formula)|what\s+is\s+[-+]?\d+|how\s+(much|many|far)\s+is\s+[-+]?\d+|\bsum\b|\bproduct\b|\bdifference\b|\bquotient\b|square\s+root|sqrt|\bpercent(age)?\b|\baverage\b|\bmean\b|\bmedian\b|\bmode\b|prime\s+number|factorial|fibonacci|\barea\b|\bvolume\b|\bperimeter\b|multiply|divide|subtract|add|how\s+far|distance|miles|ratio|probability|fraction)\b`,
 			models.CategoryMath,
 		},
 

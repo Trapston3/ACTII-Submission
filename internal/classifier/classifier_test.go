@@ -18,6 +18,12 @@ func TestClassify(t *testing.T) {
 		{"math: average", "Find the average of 10, 20, and 30", "math"},
 		{"math: prime", "Is 97 a prime number?", "math"},
 		{"math: area formula", "What is the area of a rectangle 5 by 8?", "math"},
+		{"math: how far", "If a campus drone flies 5 miles north then 3 miles east, how far is it from start?", "math"},
+		{"math: distance", "What is the distance between the two points?", "math"},
+		{"math: miles", "How many miles is it to the moon?", "math"},
+		{"math: ratio", "What is the ratio of apples to oranges?", "math"},
+		{"math: probability", "What is the probability of rolling a 6?", "math"},
+		{"math: fraction", "Simplify the fraction 4/8.", "math"},
 
 		// ── SENTIMENT ───────────────────────────────────────────────────────────
 		{"sentiment: classify keyword", "Classify the sentiment of this review: I love it!", "sentiment"},

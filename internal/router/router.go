@@ -37,6 +37,7 @@ func (r *Router) SelectModel(category string) string {
 	}
 
 	// 1. Gemma-First Override: text tasks, if any allowed model contains "gemma", select it immediately.
+	// 1. Gemma-First Override: text tasks, if any allowed model contains "gemma", select it immediately.
 	isTextTask := category == models.CategorySentiment || category == models.CategoryNER || category == models.CategorySummarize || category == models.CategoryFactual
 	if isTextTask {
 		if gemmaModel, found := findModel("gemma"); found {
@@ -44,25 +45,39 @@ func (r *Router) SelectModel(category string) string {
 		}
 	}
 
-	// 2. Specific Tier Hierarchies
+	// 2. Specific Cost-Aware OmniEdge hierarchies
 	switch category {
 	case models.CategorySentiment, models.CategoryNER:
-		// Tier 1 (Cheapest - Sentiment, NER): Prioritize "gpt-oss-20b", then "deepseek-v4-flash", then "minimax".
-		for _, name := range []string{"gpt-oss-20b", "deepseek-v4-flash", "minimax"} {
+		// Tier 1 (Sentiment, NER): Prioritize gemma-2-9b-it, llama-v3p1-8b-instruct, llama-8b-small, llama-8b-cheap
+		for _, name := range []string{"gemma-2-9b-it", "llama-v3p1-8b-instruct", "llama-8b-small", "llama-8b-cheap"} {
 			if m, found := findModel(name); found {
 				return m
 			}
 		}
+		// If forced to fall back to a weak model like glm-5p1, use it
+		for _, name := range []string{"glm-5p1", "gpt-oss-20b", "deepseek-v4-flash", "minimax"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+
 	case models.CategorySummarize, models.CategoryFactual:
-		// Tier 2 (Mid/Fast - Summarization, Factual): Prioritize "gpt-oss-120b", then "qwen3", then "deepseek-v4-flash".
-		for _, name := range []string{"gpt-oss-120b", "qwen3", "deepseek-v4-flash"} {
+		// Tier 2 (Summarization, Factual): Prioritize llama-v3p3-70b-instruct, qwen2.5-72b-instruct
+		for _, name := range []string{"llama-v3p3-70b-instruct", "qwen2.5-72b-instruct", "gpt-oss-120b", "qwen3", "llama-70b-std"} {
 			if m, found := findModel(name); found {
 				return m
 			}
 		}
+		// Fallback to Tier 1 cheapest models if Tier 2 is missing
+		for _, name := range []string{"gemma-2-9b-it", "llama-v3p1-8b-instruct", "llama-8b-small", "llama-8b-cheap", "glm-5p1", "deepseek-v4-flash"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+
 	case models.CategoryCodeGen, models.CategoryCodeDebug, models.CategoryMath, models.CategoryLogical:
-		// Tier 3 (Heavy - Code, Math, Logic): Do not use Gemma. Prioritize "deepseek-v4-pro", then "glm-5p2", then "kimi-k2p7-code".
-		for _, name := range []string{"deepseek-v4-pro", "glm-5p2", "kimi-k2p7-code"} {
+		// Tier 3 (Math, Logic, Code): Prioritize deepseek-v4-pro, deepseek-r1, glm-5p2, kimi-k2p7-code, deepseek-r1-heavy
+		for _, name := range []string{"deepseek-v4-pro", "deepseek-r1", "glm-5p2", "kimi-k2p7-code", "deepseek-r1-heavy"} {
 			if m, found := findModel(name); found {
 				return m
 			}
