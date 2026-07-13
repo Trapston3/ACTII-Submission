@@ -276,7 +276,46 @@ func sanitizeOutput(content string) string {
 	// 3. Strip trailing sign-off noise ("Let me know if...", etc.)
 	content = signoffRe.ReplaceAllString(content, "")
 
-	// 4. Normalize whitespace and trim
+	// 4. Strip chain-of-thought and meta-analysis lines
+	content = stripMetaAnalysis(content)
+
+	// 5. Normalize whitespace and trim
 	content = strings.TrimSpace(content)
 	return content
 }
+
+// stripMetaAnalysis removes lines starting with "Analyze the request", "Determine the answer:", etc.
+func stripMetaAnalysis(content string) string {
+	lines := strings.Split(content, "\n")
+	var cleanedLines []string
+	
+	// Skip lines matching common reasoning/analysis placeholders
+	metaRe := regexp.MustCompile(`(?i)^\s*[-*•\d\.]*\s*\**\b(analyze|request|constraints|determine the answer|format the output|step \d+|let's analyze|let us analyze|to solve this|we need to|question|prompt|input text|task|instruction)\b`)
+	
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if metaRe.MatchString(trimmed) {
+			// Extract any trailing useful content from the line, or skip
+			// e.g. "- Determine the answer: Yes." -> we want to keep "Yes."
+			lower := strings.ToLower(trimmed)
+			if idx := strings.Index(lower, "determine the answer:"); idx != -1 {
+				ansPart := trimmed[idx+len("determine the answer:"):]
+				ansPart = strings.TrimLeft(ansPart, " *:-`\"'")
+				if ansPart != "" {
+					cleanedLines = append(cleanedLines, ansPart)
+				}
+			}
+			continue
+		}
+		cleanedLines = append(cleanedLines, line)
+	}
+	
+	if len(cleanedLines) > 0 {
+		return strings.Join(cleanedLines, "\n")
+	}
+	return content
+}
+

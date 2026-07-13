@@ -305,14 +305,14 @@ func solveSentiment(prompt string) models.SolverResult {
 	// to avoid misclassifying mixed-sentiment text
 	if posCount >= 2 && negCount == 0 {
 		return models.SolverResult{
-			Answer:     "positive",
+			Answer:     "Positive: The statement contains highly positive and enthusiastic wording.",
 			Solved:     true,
 			Confidence: 0.95,
 		}
 	}
 	if negCount >= 2 && posCount == 0 {
 		return models.SolverResult{
-			Answer:     "negative",
+			Answer:     "Negative: The statement contains critical and negative wording.",
 			Solved:     true,
 			Confidence: 0.95,
 		}

@@ -75,15 +75,15 @@ func TestSolve_SentimentHighConfidence(t *testing.T) {
 		wantAnswer string
 	}{
 		// ── Strong positive (2+ positive signals, 0 negative) ───────────────────
-		{"strong love+amazing", "I absolutely love this amazing product!", true, "positive"},
-		{"strong excellent+fantastic", "The service was excellent and fantastic", true, "positive"},
-		{"strong wonderful+great", "This is a wonderful and great experience", true, "positive"},
-		{"strong best+perfect", "This is the best and most perfect meal ever", true, "positive"},
+		{"strong love+amazing", "I absolutely love this amazing product!", true, "Positive: The statement contains highly positive and enthusiastic wording."},
+		{"strong excellent+fantastic", "The service was excellent and fantastic", true, "Positive: The statement contains highly positive and enthusiastic wording."},
+		{"strong wonderful+great", "This is a wonderful and great experience", true, "Positive: The statement contains highly positive and enthusiastic wording."},
+		{"strong best+perfect", "This is the best and most perfect meal ever", true, "Positive: The statement contains highly positive and enthusiastic wording."},
 
 		// ── Strong negative (2+ negative signals, 0 positive) ───────────────────
-		{"strong terrible+hate", "This is terrible and I hate it with passion", true, "negative"},
-		{"strong awful+horrible", "Awful and horrible experience, never returning", true, "negative"},
-		{"strong worst+disgusting", "The worst, most disgusting service I've had", true, "negative"},
+		{"strong terrible+hate", "This is terrible and I hate it with passion", true, "Negative: The statement contains critical and negative wording."},
+		{"strong awful+horrible", "Awful and horrible experience, never returning", true, "Negative: The statement contains critical and negative wording."},
+		{"strong worst+disgusting", "The worst, most disgusting service I've had", true, "Negative: The statement contains critical and negative wording."},
 
 		// ── Ambiguous/mixed — MUST NOT solve locally ────────────────────────────
 		{"mixed positive+negative", "The food was great but the service was terrible", false, ""},

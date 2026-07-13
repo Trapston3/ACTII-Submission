@@ -91,7 +91,7 @@ func TestIntegration_EndToEndOrchestration(t *testing.T) {
 	}
 
 	// Task 2: sentiment solved via local + 1-token gate
-	if results[1].TaskID != "task-2" || results[1].Answer != "positive" {
+	if results[1].TaskID != "task-2" || results[1].Answer != "Positive: The statement contains highly positive and enthusiastic wording." {
 		t.Errorf("task-2 (sentiment) failed: got %+v", results[1])
 	}
 

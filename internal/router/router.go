@@ -34,14 +34,14 @@ func (r *Router) SelectModel(category string) string {
 		return r.config.Models[0]
 	}
 
-	preferredTier := 2
+	preferredTier := 3
 	switch category {
 	case models.CategorySentiment, models.CategoryNER:
-		preferredTier = 1
+		preferredTier = 3
 	case models.CategoryFactual, models.CategorySummarize, models.CategoryGeneral:
-		preferredTier = 2
+		preferredTier = 3
 	case models.CategoryMath, models.CategoryLogical:
-		preferredTier = 2
+		preferredTier = 3
 	case models.CategoryCodeGen, models.CategoryCodeDebug:
 		preferredTier = 3
 	}

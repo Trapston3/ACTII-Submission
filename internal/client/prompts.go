@@ -7,28 +7,28 @@ package client
 // judge will penalize.
 const terseSuffix = " Do not explain. Do not use markdown. Plain text only."
 
-// SystemPrompt returns a terse system prompt for the specified task category.
-// Enforces formatting rules (e.g. no explanations, JSON, or reasoning).
+// SystemPrompt returns a clear system prompt for the specified task category.
+// Enforces formatting rules without contradictory or confusing constraints.
 func SystemPrompt(category string) string {
 	switch category {
 	case "math":
-		return "Solve. Return ONLY the final numerical answer or expression. No steps, no text." + terseSuffix
+		return "Solve the mathematical problem. Return ONLY the final numerical answer or expression. Do not show work or explanations unless requested by the prompt. Plain text only. No markdown."
 	case "sentiment":
-		return "Classify sentiment as Positive, Negative, Mixed, or Neutral. State the label, then give a one-sentence reason." + terseSuffix
+		return "Classify the sentiment of the text. State the label (Positive, Negative, Mixed, or Neutral), followed by a colon and a one-sentence justification. Example: 'Positive: The tone is highly enthusiastic and appreciative.' Plain text only."
 	case "ner":
-		return "Extract named entities. Return ONLY a comma-separated list. No other text." + terseSuffix
+		return "Identify all named entities mentioned in the input text and extract them with their corresponding type labels. Format the output as a comma-separated list where each entity is followed by its type in parentheses, like: Entity Name (TYPE). Example: Barack Obama (PERSON), Hawaii (LOCATION). Plain text only."
 	case "factual":
-		return "Answer concisely. Return ONLY the direct answer. Keep it under 2 sentences." + terseSuffix
+		return "Answer the question directly, accurately, and concisely. Fulfill all parts of the question. Plain text only."
 	case "summarization":
-		return "Summarize the text in 2-3 concise sentences. No introductory text." + terseSuffix
+		return "Summarize the text in 2-3 concise sentences. Plain text only."
 	case "code_generation":
-		return "Write the code. Return ONLY the raw code without markdown blocks or explanation." + terseSuffix
+		return "Write the requested code. Return ONLY the raw code. Do not wrap in markdown code blocks. Do not write any explanations or introduction."
 	case "code_debugging":
-		return "Fix the code. Return ONLY the corrected code. No explanations, no markdown blocks." + terseSuffix
+		return "Fix the bug in the provided code. Return ONLY the corrected code. Do not wrap in markdown code blocks. Do not write any explanations."
 	case "logical":
-		return "Solve. Return ONLY the final answer. No reasoning, no steps." + terseSuffix
+		return "Solve the logic puzzle. Return ONLY the direct answer. Plain text only."
 	default:
-		return "Answer the prompt concisely and directly." + terseSuffix
+		return "Answer the prompt concisely and directly. Plain text only."
 	}
 }
 
@@ -38,22 +38,22 @@ func SystemPrompt(category string) string {
 func MaxTokensForCategory(category string) int {
 	switch category {
 	case "math":
-		return 30 // Single number or expression
+		return 150 // Allow sufficient tokens for expression outputs
 	case "sentiment":
-		return 50 // Label + one-sentence justification
+		return 500 // Label + one-sentence justification (bumped to allow reasoning space)
 	case "ner":
-		return 80 // Comma-separated entity list
+		return 200 // List of entities with types
 	case "factual":
-		return 150 // 1-2 sentences (bumped per judge requirements)
+		return 250 // 1-2 sentences with explanation if needed
 	case "summarization":
-		return 200 // 2-3 sentences (bumped per judge requirements)
+		return 300 // 2-3 sentences
 	case "code_generation":
-		return 300 // Raw code block
+		return 800 // Code can be longer
 	case "code_debugging":
-		return 300 // Corrected code
+		return 800 // Code can be longer
 	case "logical":
-		return 80 // Direct conclusion
+		return 200 // Logic puzzles can have structured responses
 	default:
-		return 150 // General catch-all
+		return 250 // General catch-all
 	}
 }

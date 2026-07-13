@@ -20,16 +20,16 @@ func TestRouter_SelectModel(t *testing.T) {
 			"only-model",
 		},
 		{
-			"selects cheapest model for sentiment/ner (Tier 1)",
+			"selects powerful model for sentiment/ner (Tier 3)",
 			[]string{"llama-8b-small", "llama-70b-std", "deepseek-r1-heavy"},
 			"sentiment",
-			"llama-8b-small",
+			"deepseek-r1-heavy",
 		},
 		{
-			"selects mid-range model for factual/summarization (Tier 2)",
+			"selects powerful model for factual/summarization (Tier 3)",
 			[]string{"llama-8b-small", "llama-70b-std", "deepseek-r1-heavy"},
 			"summarization",
-			"llama-70b-std",
+			"deepseek-r1-heavy",
 		},
 		{
 			"selects powerful model for code_generation/code_debugging (Tier 3)",
@@ -41,12 +41,6 @@ func TestRouter_SelectModel(t *testing.T) {
 			"fallback to closest tier when preferred tier is missing (Tier 3 requested, Tier 2 closest)",
 			[]string{"llama-8b-small", "llama-70b-std"},
 			"code_debugging",
-			"llama-70b-std",
-		},
-		{
-			"fallback to closest tier when preferred tier is missing (Tier 1 requested, Tier 2 closest)",
-			[]string{"llama-70b-std", "deepseek-r1-heavy"},
-			"sentiment",
 			"llama-70b-std",
 		},
 	}

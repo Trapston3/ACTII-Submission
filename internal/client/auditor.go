@@ -147,14 +147,28 @@ func parseSentenceLimit(prompt string) int {
 
 // auditMath extracts a clean numerical value or expression from text
 func auditMath(answer string) string {
-	// If it's already a simple expression, return as is
-	if !regexp.MustCompile(`[a-zA-Z]`).MatchString(answer) {
-		return answer
+	answer = strings.TrimSpace(answer)
+	// If it contains "sqrt", keep the expression intact
+	if strings.Contains(strings.ToLower(answer), "sqrt") {
+		// Strip conversational padding around it, e.g. "The answer is sqrt(34)" -> "sqrt(34)"
+		reSqrt := regexp.MustCompile(`(?i)\bsqrt\(\d+\)`)
+		if loc := reSqrt.FindString(answer); loc != "" {
+			return loc
+		}
 	}
-	// Try to find a decimal/integer or expression
-	matches := regexp.MustCompile(`[-+]?\d+(?:\.\d+)?`).FindAllString(answer, -1)
+
+	// Remove standard units or text like "miles", "units", "meters"
+	cleaned := regexp.MustCompile(`(?i)\s*(?:miles|units|meters|degrees|percent|%)\b`).ReplaceAllString(answer, "")
+	cleaned = strings.TrimSpace(cleaned)
+
+	// If it's a simple number or expression, return it
+	if !regexp.MustCompile(`[a-zA-Z]`).MatchString(cleaned) {
+		return cleaned
+	}
+
+	// Try to find a decimal/integer
+	matches := regexp.MustCompile(`[-+]?\d+(?:\.\d+)?`).FindAllString(cleaned, -1)
 	if len(matches) > 0 {
-		// Return the last number found (often the final answer)
 		return matches[len(matches)-1]
 	}
 	return answer
@@ -169,9 +183,10 @@ func auditNER(answer string) string {
 		if trimmed == "" {
 			continue
 		}
-		// Strip leading bullet markers or numbers (e.g. "- Apple", "1. Google")
+		// Strip leading bullet markers or numbers (e.g. "- Apple (ORG)", "1. Google (ORG)")
 		cleaned := regexp.MustCompile(`^\s*[-*•\d]+\.?\s*`).ReplaceAllString(trimmed, "")
-		cleaned = strings.Trim(cleaned, `.," `)
+		// Strip trailing periods/commas but NOT parentheses
+		cleaned = strings.Trim(cleaned, `., `)
 		if cleaned != "" {
 			entities = append(entities, cleaned)
 		}
@@ -182,7 +197,7 @@ func auditNER(answer string) string {
 	// Fallback to splitting by commas if no lines/lists found
 	parts := strings.Split(answer, ",")
 	for i, p := range parts {
-		parts[i] = strings.Trim(p, `.," `)
+		parts[i] = strings.Trim(p, `., `)
 	}
 	return strings.Join(parts, ", ")
 }
