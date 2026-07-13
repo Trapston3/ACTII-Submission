@@ -148,18 +148,9 @@ func processTask(
 			return models.Result{TaskID: taskID, Answer: solverResult.Answer}
 		}
 
-		// Borderline confidence (e.g. sentiment) -> 1-Token validation gate
-		cheapModel := taskRouter.CheapestModel()
-		log.Printf("[Task %s] Local Solve borderline (confidence: %.2f). Validating via 1-token gate...",
+		// Borderline confidence -> bypass validation gate and escalate to cloud
+		log.Printf("[Task %s] Local Solve borderline (confidence: %.2f). Bypassing validation gate and escalating to cloud...",
 			taskID, solverResult.Confidence)
-		valid, _, err := apiClient.ValidateAnswer(ctx, cheapModel, prompt, solverResult.Answer)
-		if err == nil && valid {
-			log.Printf("[Task %s] 1-Token validation gate CONFIRMED answer", taskID)
-			taskCache.Set(prompt, solverResult.Answer)
-			return models.Result{TaskID: taskID, Answer: solverResult.Answer}
-		}
-		log.Printf("[Task %s] 1-Token validation REJECTED local answer (or error: %v). Escaling to cloud...",
-			taskID, err)
 	}
 
 	// D. Prompt compression & optimization

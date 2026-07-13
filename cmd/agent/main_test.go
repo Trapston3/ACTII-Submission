@@ -90,8 +90,8 @@ func TestIntegration_EndToEndOrchestration(t *testing.T) {
 		t.Errorf("task-1 (math) failed: got %+v", results[0])
 	}
 
-	// Task 2: sentiment solved via local + 1-token gate
-	if results[1].TaskID != "task-2" || results[1].Answer != "Positive: The statement contains highly positive and enthusiastic wording." {
+	// Task 2: sentiment escalated to cloud because validation gate is removed
+	if results[1].TaskID != "task-2" || results[1].Answer != "Neutral: Paris" {
 		t.Errorf("task-2 (sentiment) failed: got %+v", results[1])
 	}
 

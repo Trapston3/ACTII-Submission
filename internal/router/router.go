@@ -4,6 +4,7 @@ package router
 
 import (
 	"math"
+	"strings"
 
 	"devfleet-agent/internal/config"
 	"devfleet-agent/internal/models"
@@ -20,40 +21,74 @@ func NewRouter(cfg *config.Config) *Router {
 }
 
 // SelectModel maps a task category to the best available model in ALLOWED_MODELS.
-// Category mappings:
-//  - sentiment, ner                 -> Tier 1 (cheapest)
-//  - factual, summarization, general -> Tier 2 (standard)
-//  - math, logical                  -> Tier 2-3 (complex)
-//  - code_generation, code_debugging -> Tier 3 (powerful)
-//
-// If preferred tier is unavailable, it finds the closest available tier
-// (preferring cheaper models first to preserve tokens).
 func (r *Router) SelectModel(category string) string {
 	// If only one model is allowed, we have no routing choices.
 	if len(r.config.Models) == 1 {
 		return r.config.Models[0]
 	}
 
-	preferredTier := 3
+	findModel := func(sub string) (string, bool) {
+		for _, m := range r.config.Models {
+			if strings.Contains(strings.ToLower(m), strings.ToLower(sub)) {
+				return m, true
+			}
+		}
+		return "", false
+	}
+
+	// 1. Gemma-First Override: text tasks, if any allowed model contains "gemma", select it immediately.
+	isTextTask := category == models.CategorySentiment || category == models.CategoryNER || category == models.CategorySummarize || category == models.CategoryFactual
+	if isTextTask {
+		if gemmaModel, found := findModel("gemma"); found {
+			return gemmaModel
+		}
+	}
+
+	// 2. Specific Tier Hierarchies
 	switch category {
 	case models.CategorySentiment, models.CategoryNER:
-		preferredTier = 3
+		// Tier 1 (Cheapest - Sentiment, NER): Prioritize "gpt-oss-20b", then "deepseek-v4-flash", then "minimax".
+		for _, name := range []string{"gpt-oss-20b", "deepseek-v4-flash", "minimax"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+	case models.CategorySummarize, models.CategoryFactual:
+		// Tier 2 (Mid/Fast - Summarization, Factual): Prioritize "gpt-oss-120b", then "qwen3", then "deepseek-v4-flash".
+		for _, name := range []string{"gpt-oss-120b", "qwen3", "deepseek-v4-flash"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+	case models.CategoryCodeGen, models.CategoryCodeDebug, models.CategoryMath, models.CategoryLogical:
+		// Tier 3 (Heavy - Code, Math, Logic): Do not use Gemma. Prioritize "deepseek-v4-pro", then "glm-5p2", then "kimi-k2p7-code".
+		for _, name := range []string{"deepseek-v4-pro", "glm-5p2", "kimi-k2p7-code"} {
+			if m, found := findModel(name); found {
+				return m
+			}
+		}
+	}
+
+	// 3. Fallback: If no prioritized model matches, use tier-based fallback
+	preferredTier := 2
+	switch category {
+	case models.CategorySentiment, models.CategoryNER:
+		preferredTier = 1
 	case models.CategoryFactual, models.CategorySummarize, models.CategoryGeneral:
-		preferredTier = 3
+		preferredTier = 2
 	case models.CategoryMath, models.CategoryLogical:
 		preferredTier = 3
 	case models.CategoryCodeGen, models.CategoryCodeDebug:
 		preferredTier = 3
 	}
 
-	// 1. Try to find a model matching the exact preferred tier.
+	// Try exact match
 	for _, m := range r.config.Models {
 		if r.config.ModelTiers[m] == preferredTier {
 			return m
 		}
 	}
-
-	// 2. Try to find a cheaper model (preferredTier - 1, preferredTier - 2).
+	// Try fallback (prefer cheaper models first)
 	for t := preferredTier - 1; t >= 1; t-- {
 		for _, m := range r.config.Models {
 			if r.config.ModelTiers[m] == t {
@@ -61,8 +96,6 @@ func (r *Router) SelectModel(category string) string {
 			}
 		}
 	}
-
-	// 3. Try to find a more expensive model (preferredTier + 1, preferredTier + 2).
 	for t := preferredTier + 1; t <= 3; t++ {
 		for _, m := range r.config.Models {
 			if r.config.ModelTiers[m] == t {
@@ -70,8 +103,6 @@ func (r *Router) SelectModel(category string) string {
 			}
 		}
 	}
-
-	// 4. Default to first model.
 	return r.config.Models[0]
 }
 

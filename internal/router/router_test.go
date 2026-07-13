@@ -20,41 +20,63 @@ func TestRouter_SelectModel(t *testing.T) {
 			"only-model",
 		},
 		{
-			"selects powerful model for sentiment/ner (Tier 3)",
-			[]string{"llama-8b-small", "llama-70b-std", "deepseek-r1-heavy"},
+			"Gemma-First override for text tasks",
+			[]string{"deepseek-v4-pro", "gemma-2b-it", "minimax"},
 			"sentiment",
-			"deepseek-r1-heavy",
+			"gemma-2b-it",
 		},
 		{
-			"selects powerful model for factual/summarization (Tier 3)",
-			[]string{"llama-8b-small", "llama-70b-std", "deepseek-r1-heavy"},
+			"Tier 1 cheapest prioritization (gpt-oss-20b first)",
+			[]string{"minimax", "deepseek-v4-flash", "gpt-oss-20b"},
+			"sentiment",
+			"gpt-oss-20b",
+		},
+		{
+			"Tier 1 cheapest prioritization (deepseek-v4-flash second)",
+			[]string{"minimax", "deepseek-v4-flash"},
+			"ner",
+			"deepseek-v4-flash",
+		},
+		{
+			"Tier 2 mid-range prioritization (gpt-oss-120b first)",
+			[]string{"deepseek-v4-flash", "qwen3-72b", "gpt-oss-120b"},
 			"summarization",
-			"deepseek-r1-heavy",
+			"gpt-oss-120b",
 		},
 		{
-			"selects powerful model for code_generation/code_debugging (Tier 3)",
-			[]string{"llama-8b-small", "llama-70b-std", "deepseek-r1-heavy"},
+			"Tier 2 mid-range prioritization (qwen3 second)",
+			[]string{"deepseek-v4-flash", "qwen3-72b"},
+			"factual",
+			"qwen3-72b",
+		},
+		{
+			"Tier 3 heavy prioritization (deepseek-v4-pro first)",
+			[]string{"kimi-k2p7-code", "glm-5p2", "deepseek-v4-pro"},
+			"math",
+			"deepseek-v4-pro",
+		},
+		{
+			"Tier 3 heavy does NOT use gemma",
+			[]string{"gemma-7b-it", "kimi-k2p7-code", "glm-5p2"},
 			"code_generation",
-			"deepseek-r1-heavy",
+			"glm-5p2",
 		},
 		{
-			"fallback to closest tier when preferred tier is missing (Tier 3 requested, Tier 2 closest)",
-			[]string{"llama-8b-small", "llama-70b-std"},
-			"code_debugging",
+			"fallback to closest tier when preferred tier is missing (Tier 1 requested, Tier 2 closest)",
+			[]string{"llama-70b-std", "deepseek-r1-heavy"},
+			"sentiment",
 			"llama-70b-std",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Construct config manually
 			cfg := &config.Config{
 				APIKey:     "test",
 				BaseURL:    "test",
 				Models:     tt.models,
 				ModelTiers: make(map[string]int),
 			}
-			// Reclassify tiers to match config Load logic
 			for _, m := range tt.models {
 				cfg.ModelTiers[m] = tierForTest(m)
 			}
@@ -87,7 +109,7 @@ func tierForTest(m string) int {
 	if m == "llama-8b-small" {
 		return 1
 	}
-	if m == "deepseek-r1-heavy" {
+	if m == "deepseek-r1-heavy" || m == "glm-5p2" {
 		return 3
 	}
 	return 2

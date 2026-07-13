@@ -41,22 +41,16 @@ var strictNumericalRe = regexp.MustCompile(`^[\d\s\.\+\-\*\/\^\(\)]+$|^[\d\s\.\+
 var wordContentRe = regexp.MustCompile(`[a-zA-Z]{2,}`)
 
 func solveMath(prompt string) models.SolverResult {
-	// Normalize: collapse whitespace, lowercase sqrt
 	expr := strings.TrimSpace(prompt)
-	expr = regexp.MustCompile(`\s+`).ReplaceAllString(expr, " ")
-	exprLower := strings.ToLower(expr)
 
-	// STRICT GATE: detect any alphabetic word content beyond "sqrt"
-	// Replace sqrt with a placeholder to check what remains
-	withoutSqrt := regexp.MustCompile(`(?i)\bsqrt\b`).ReplaceAllString(exprLower, "")
-	if wordContentRe.MatchString(withoutSqrt) {
-		// Alphabetic content detected beyond sqrt → word math → skip
+	// Strict gate: reject any alphabetic characters (a-z, A-Z)
+	if regexp.MustCompile(`[a-zA-Z]`).MatchString(expr) {
 		return models.SolverResult{Solved: false}
 	}
 
-	// Secondary gate: expression must only contain allowed characters
+	// Secondary gate: expression must only contain allowed characters: digits, spaces, and operators
 	allowed := regexp.MustCompile(`^[\d\s\.\+\-\*\/\^\(\)]*$`)
-	if !allowed.MatchString(withoutSqrt) {
+	if !allowed.MatchString(expr) {
 		return models.SolverResult{Solved: false}
 	}
 

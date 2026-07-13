@@ -14,13 +14,13 @@ func SystemPrompt(category string) string {
 	case "math":
 		return "Solve the mathematical problem. Return ONLY the final numerical answer or expression. Do not show work or explanations unless requested by the prompt. Plain text only. No markdown."
 	case "sentiment":
-		return "Classify the sentiment of the text. State the label (Positive, Negative, Mixed, or Neutral), followed by a colon and a one-sentence justification. Example: 'Positive: The tone is highly enthusiastic and appreciative.' Plain text only."
+		return "Classify the sentiment of the text. State the label (Positive, Negative, Mixed, or Neutral), followed by a colon and a one-sentence justification. Example: 'Positive: The tone is highly enthusiastic and appreciative.' Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
 	case "ner":
-		return "Identify all named entities mentioned in the input text and extract them with their corresponding type labels. Format the output as a comma-separated list where each entity is followed by its type in parentheses, like: Entity Name (TYPE). Example: Barack Obama (PERSON), Hawaii (LOCATION). Plain text only."
+		return "Identify all named entities mentioned in the input text and extract them with their corresponding type labels. Format the output as a comma-separated list where each entity is followed by its type in parentheses, like: Entity Name (TYPE). Example: Barack Obama (PERSON), Hawaii (LOCATION). Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
 	case "factual":
-		return "Answer the question directly, accurately, and concisely. Fulfill all parts of the question. Plain text only."
+		return "Answer the question directly, accurately, and concisely. Fulfill all parts of the question. Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
 	case "summarization":
-		return "Summarize the text in 2-3 concise sentences. Plain text only."
+		return "Summarize the text in 2-3 concise sentences. Plain text only. Respond immediately with the final structured answer. Do not use conversational filler, introductory text, or markdown blocks. Provide only the requested data."
 	case "code_generation":
 		return "Write the requested code. Return ONLY the raw code. Do not wrap in markdown code blocks. Do not write any explanations or introduction."
 	case "code_debugging":
